@@ -62,8 +62,10 @@
 
 <div class="sidebar">
     <ul class="sidebar-menu">
+        <!-- Menu Dashboard -->
         <li><a href="index.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-        
+
+        <!-- Menu Data Master -->
         <li class="menu-toggle">
             <a href="javascript:void(0)"><i class="fas fa-cogs"></i> Data Master</a>
             <ul class="submenu">
@@ -72,7 +74,8 @@
                 <li><a href="supplier.php"><i class="fas fa-truck"></i> Supplier</a></li>
             </ul>
         </li>
-        
+
+        <!-- Menu Transaksi dengan Submenu -->
         <li class="menu-toggle">
             <a href="javascript:void(0)"><i class="fas fa-exchange-alt"></i> Transaksi</a>
             <ul class="submenu">
@@ -80,9 +83,19 @@
                 <li><a href="laporan.php"><i class="fas fa-chart-bar"></i> Laporan Penjualan</a></li>
             </ul>
         </li>
-        
-        <li><a href="restok.php"><i class="fas fa-box"></i> Restok</a></li>
+
+        <!-- Menu Restok dengan Submenu -->
+        <li class="menu-toggle">
+            <a href="javascript:void(0)"><i class="fas fa-box"></i> Restok</a>
+            <ul class="submenu">
+                <li><a href="laporan_pembelian.php"><i class="fas fa-file-invoice"></i> Laporan Pembelian</a></li>
+            </ul>
+        </li>
+
+        <!-- Menu Pengembalian sebagai menu terpisah -->
         <li><a href="pengembalian.php"><i class="fas fa-undo"></i> Pengembalian</a></li>
+
+        <!-- Menu lainnya -->
         <li><a href="pengaturan.php"><i class="fas fa-cogs"></i> Pengaturan Toko</a></li>
     </ul>
 </div>
@@ -92,12 +105,17 @@
     // Mendapatkan semua elemen dengan kelas 'menu-toggle'
     document.querySelectorAll('.menu-toggle').forEach(function(menu) {
         menu.addEventListener('click', function() {
-            // Menutup submenu lain yang sedang terbuka
-            document.querySelectorAll('.menu-toggle').forEach(function(otherMenu) {
-                if (otherMenu !== menu) otherMenu.classList.remove('active');
-            });
-            // Toggle untuk menampilkan submenu
-            menu.classList.toggle('active');
+            // Mengecek apakah menu sudah aktif atau belum
+            if (menu.classList.contains('active')) {
+                // Jika menu sudah aktif, tutup submenu dan hilangkan class 'active' dari menu
+                menu.classList.remove('active');
+            } else {
+                // Jika menu belum aktif, buka submenu dan aktifkan class 'active'
+                document.querySelectorAll('.menu-toggle').forEach(function(otherMenu) {
+                    otherMenu.classList.remove('active'); // Tutup semua submenu
+                });
+                menu.classList.add('active'); // Menampilkan submenu yang diklik
+            }
         });
     });
 </script>
