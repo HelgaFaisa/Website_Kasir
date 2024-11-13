@@ -55,122 +55,182 @@ $monthlySalesData = getMonthlySalesData();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Toko Baju</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Tambahkan Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* CSS Styles */
+        /* Reset and general styling */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+
+        /* Body and background */
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f3f4f6;
         }
+
+        /* Navbar Styling */
         .navbar {
-            background-color: #800000;
-            padding: 1rem;
-            color: white;
-            position: fixed;
-            width: 100%;
-            top: 0;
-            z-index: 1000;
+            background-color: #343a40;
+            color: #ffffff;
+            padding: 1rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 100;
         }
+
         .navbar-brand {
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             font-weight: bold;
+            color: #f8f9fa;
         }
+
         .navbar-user {
             display: flex;
             align-items: center;
-            gap: 1rem;
         }
+
         .navbar-user a {
-            color: white;
+            color: #ffffff;
             text-decoration: none;
+            margin-left: 15px;
+            font-size: 1.1rem;
         }
+
+        /* Sidebar Styling */
         .sidebar {
-            background-color: #2c3e50;
+            background-color: #343a40;
             width: 250px;
             height: 100vh;
             position: fixed;
             top: 60px;
             left: 0;
-            padding-top: 1rem;
+            padding-top: 20px;
+            z-index: 99;
         }
+
         .sidebar-menu {
             list-style: none;
+            padding-left: 0;
         }
+
+        .sidebar-menu li {
+            position: relative;
+        }
+
         .sidebar-menu li a {
-            color: white;
+            color: #ffffff;
             text-decoration: none;
-            padding: 1rem;
+            padding: 15px 20px;
             display: block;
-            transition: background-color 0.3s;
+            transition: background-color 0.3s ease-in-out;
+            border-bottom: 1px solid #484848;
         }
+
         .sidebar-menu li a:hover {
-            background-color: #34495e;
+            background-color: #0062cc;
         }
+
+        /* Submenu Styling (Dropdown) */
+        .submenu {
+            display: none;
+            list-style: none;
+            padding-left: 30px;
+        }
+
+        .submenu li a {
+            padding: 12px 20px;
+            font-size: 0.9rem;
+        }
+
+        .sidebar-menu li.active > .submenu {
+            display: block;
+        }
+
+        /* Main Content Area */
         .main-content {
             margin-left: 250px;
-            margin-top: 60px;
-            padding: 2rem;
-            min-height: calc(100vh - 120px);
+            margin-top: 80px;
+            padding: 30px;
         }
+
+        /* Dashboard Cards */
         .dashboard-cards {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
         }
+
         .card {
-            background-color: white;
-            padding: 1.5rem;
+            background-color: #ffffff;
+            padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: box-shadow 0.3s ease-in-out;
         }
+
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
         .card-title {
-            font-size: 1.1rem;
-            color: #666;
-            margin-bottom: 0.5rem;
+            font-size: 1.2rem;
+            color: #6c757d;
+            margin-bottom: 10px;
         }
+
         .card-value {
-            font-size: 2rem;
+            font-size: 2.5rem;
             font-weight: bold;
-            color: #800000;
+            color: #007bff;
         }
+
+        /* Footer Styling */
         .footer {
-            background-color: #800000;
-            color: white;
+            background-color: #343a40;
+            color: #f8f9fa;
             text-align: center;
-            padding: 1rem;
+            padding: 20px;
             position: fixed;
             bottom: 0;
             width: calc(100% - 250px);
             margin-left: 250px;
         }
+
+        /* Responsive Design */
         @media (max-width: 768px) {
             .sidebar {
                 width: 60px;
-                overflow: hidden;
             }
-            .sidebar-menu span {
-                display: none;
+
+            .sidebar-menu li a {
+                padding: 12px;
+                text-align: center;
             }
-            .main-content, .footer {
+
+            .main-content {
                 margin-left: 60px;
                 width: calc(100% - 60px);
             }
+
             .dashboard-cards {
                 grid-template-columns: 1fr;
+            }
+
+            .navbar {
+                flex-direction: column;
             }
         }
     </style>
 </head>
 <body>
+    <!-- Navbar -->
     <nav class="navbar">
         <div class="navbar-brand">Toko Baju</div>
         <div class="navbar-user">
@@ -179,75 +239,90 @@ $monthlySalesData = getMonthlySalesData();
         </div>
     </nav>
 
-    <div class="sidebar">
-        <ul class="sidebar-menu">
-            <li><a href="index.php"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
-            <li><a href="barang.php"><i class="fas fa-tshirt"></i> <span>Barang</span></a></li>
-            <li><a href="penjualan.php"><i class="fas fa-shopping-cart"></i> <span>Penjualan</span></a></li>
-            <li><a href="customers.php"><i class="fas fa-users"></i> <span>Pelanggan</span></a></li>
-            <li><a href="reports.php"><i class="fas fa-chart-bar"></i> <span>Laporan</span></a></li>
-            <li><a href="settings.php"><i class="fas fa-cog"></i> <span>Pengaturan</span></a></li>
-        </ul>
-    </div>
+    <!-- Sidebar -->
+    <?php include('sidebar.php'); ?>
 
+    <!-- Main Content -->
     <div class="main-content">
         <h1>Dashboard</h1>
-        
+
+        <!-- Dashboard Cards -->
         <div class="dashboard-cards">
             <div class="card">
-                <div class="card-title">Stok Barang</div>
+                <div class="card-title">Total Barang</div>
                 <div class="card-value"><?php echo getTotal('barang'); ?></div>
             </div>
             <div class="card">
-                <div class="card-title">Total Penjualan</div>
+                <div class="card-title">Total Supplier</div>
+                <div class="card-value"><?php echo getTotal('supplier'); ?></div>
+            </div>
+            <div class="card">
+                <div class="card-title">Penjualan Hari Ini</div>
                 <div class="card-value">Rp <?php echo number_format(getDailySales(), 0, ',', '.'); ?></div>
             </div>
             <div class="card">
-                <div class="card-title">Jumlah Barang Terjual</div>
+                <div class="card-title">Barang Terjual</div>
                 <div class="card-value"><?php echo getTotalSoldItems(); ?></div>
             </div>
         </div>
 
-        <!-- Grafik Bar Chart Penjualan Bulanan -->
-        <h2>Grafik Penjualan Bulanan</h2>
-        <canvas id="monthlySalesChart" width="400" height="200"></canvas>
+        <!-- Chart -->
+        <canvas id="salesChart"></canvas>
     </div>
 
+    <!-- Footer -->
     <div class="footer">
-        &copy; 2024 Toko Baju
+        <p>&copy; 2024 Toko Baju. All Rights Reserved.</p>
     </div>
 
     <script>
-        // Data untuk grafik bulanan
-        const monthlySalesData = <?php echo json_encode($monthlySalesData); ?>;
-        const labels = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
-        const dataValues = Array(12).fill(0).map((_, index) => monthlySalesData[index + 1] || 0);
-
-        // Buat grafik menggunakan Chart.js
-        const ctx = document.getElementById('monthlySalesChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Jumlah Penjualan',
-                    data: dataValues,
-                    backgroundColor: 'rgba(128, 0, 0, 0.7)',
-                    borderColor: 'rgba(128, 0, 0, 1)',
-                    border
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
+    // Toggle Submenu for Data Master and Transaksi
+    document.querySelectorAll('.menu-toggle').forEach(function(menu) {
+        menu.addEventListener('click', function() {
+            this.classList.toggle('active');
+            let submenu = this.querySelector('.submenu');
+            if (submenu.style.display === 'block') {
+                submenu.style.display = 'none';
+            } else {
+                submenu.style.display = 'block';
             }
         });
+    });
+
+    // Chart.js configuration for Monthly Sales Data
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    const monthlySalesData = <?php echo json_encode($monthlySalesData); ?>;
+
+    // Nama bulan dalam Bahasa Indonesia
+    const monthNames = [
+        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+
+    const labels = monthNames; // Menggunakan nama bulan
+    const data = Object.values(monthlySalesData); // Data penjualan per bulan
+
+    const salesChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Penjualan Bulanan',
+                data: data,
+                borderColor: '#007bff',
+                fill: false,
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
     </script>
 </body>
 </html>
-
