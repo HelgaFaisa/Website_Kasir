@@ -270,10 +270,6 @@ $monthlySalesData = getMonthlySalesData();
         <canvas id="salesChart"></canvas>
     </div>
 
-    <!-- Footer -->
-    <div class="footer">
-        <p>&copy; 2024 Toko Baju. All Rights Reserved.</p>
-    </div>
 
     <script>
     // Toggle Submenu for Data Master and Transaksi
