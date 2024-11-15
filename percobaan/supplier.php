@@ -1,4 +1,4 @@
-<?php
+<?php 
 session_start();
 if (!isset($_SESSION['user'])) {
     header("location: login.php");
@@ -48,6 +48,17 @@ if (isset($_GET['search'])) {
     $supplier_query = "SELECT * FROM supplier WHERE nama_supplier LIKE '%$search%' ORDER BY id_supplier DESC";
 }
 $supplier_result = $config->query($supplier_query);
+
+// Jika ada data yang ingin diedit
+$edit_supplier = null;
+if (isset($_GET['id'])) {
+    $id_supplier = $_GET['id'];
+    $stmt = $config->prepare("SELECT * FROM supplier WHERE id_supplier = ?");
+    $stmt->bind_param("i", $id_supplier);
+    $stmt->execute();
+    $edit_supplier = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+}
 ?>
 
 <!DOCTYPE html>
@@ -58,50 +69,98 @@ $supplier_result = $config->query($supplier_query);
     <title>Supplier - Toko Baju</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* Styling untuk halaman supplier */
-        .container {
-            margin-left: 250px; /* Sesuaikan dengan lebar sidebar */
-            padding: 20px;
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
         }
-
+        .container {
+            margin-left: 250px; 
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
         table {
             width: 100%;
             border-collapse: collapse;
+            margin-top: 20px;
         }
-
         th, td {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid #dee2e6;
         }
-
         th {
+            background-color: #343a40;
+            color: #ffffff;
+        }
+        tr:nth-child(even) {
             background-color: #f2f2f2;
         }
-
-        .button {
-            padding: 10px 20px;
-            margin: 5px;
-            cursor: pointer;
+        tr:hover {
+            background-color: #e9ecef;
         }
-
+        .button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 2px;
+        }
         .btn-add {
-            background-color: #4CAF50;
+            background-color: #28a745;
             color: white;
         }
-
         .btn-update {
             background-color: #007bff;
             color: white;
         }
-
         .btn-delete {
-            background-color: #f44336;
+            background-color: #dc3545;
             color: white;
         }
-
-        .btn-search {
-            background-color: #ffa500;
+        .btn-delete:hover {
+            background-color: #c82333;
+        }
+        .btn-update:hover {
+            background-color: #0069d9;
+        }
+        .btn-add:hover {
+            background-color: #218838;
+        }
+        .search-form {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 15px;
+        }
+        .search-form input[type="text"] {
+            width: 250px;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ced4da;
+        }
+        .search-form button {
+            padding: 8px 15px;
+            margin-left: 5px;
+            background-color: #007bff;
             color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ced4da;
         }
     </style>
 </head>
@@ -113,28 +172,31 @@ $supplier_result = $config->query($supplier_query);
     <div class="container">
         <h1>Data Supplier</h1>
 
-        <!-- Form untuk tambah supplier -->
+        <!-- Form untuk tambah atau update supplier -->
         <form method="POST" action="supplier.php">
-            <label for="nama_supplier">Nama Supplier:</label>
-            <input type="text" id="nama_supplier" name="nama_supplier" required><br><br>
-
-            <label for="alamat">Alamat:</label>
-            <input type="text" id="alamat" name="alamat" required><br><br>
-
-            <label for="telepon">Telepon:</label>
-            <input type="text" id="telepon" name="telepon" required><br><br>
-
-            <button type="submit" name="submit" class="button btn-add">Tambah Supplier</button>
+            <div class="form-group">
+                <label for="nama_supplier">Nama Supplier:</label>
+                <input type="text" id="nama_supplier" name="nama_supplier" placeholder="Nama Supplier" required value="<?= $edit_supplier['nama_supplier'] ?? ''; ?>">
+            </div>
+            <div class="form-group">
+                <label for="alamat">Alamat:</label>
+                <input type="text" id="alamat" name="alamat" placeholder="Alamat" required value="<?= $edit_supplier['alamat'] ?? ''; ?>">
+            </div>
+            <div class="form-group">
+                <label for="telepon">Telepon:</label>
+                <input type="text" id="telepon" name="telepon" placeholder="Telepon" required value="<?= $edit_supplier['telepon'] ?? ''; ?>">
+            </div>
+            <input type="hidden" name="id_supplier" value="<?= $edit_supplier['id_supplier'] ?? ''; ?>">
+            <button type="submit" name="<?= isset($edit_supplier) ? 'update' : 'submit'; ?>" class="button btn-add"><?= isset($edit_supplier) ? 'Update Data' : 'Tambah Supplier'; ?></button>
         </form>
 
-        <h2>Daftar Supplier</h2>
-
-        <!-- Form untuk pencarian supplier -->
-        <form method="GET" action="supplier.php">
-            <input type="text" name="search" placeholder="Cari Supplier..." required>
-            <button type="submit" class="button btn-search">Cari</button>
+        <!-- Form pencarian -->
+        <form method="GET" action="supplier.php" class="search-form">
+            <input type="text" name="search" placeholder="Cari Supplier" required>
+            <button type="submit" class="button btn-update">Search</button>
         </form>
 
+        <!-- Tabel Data Supplier -->
         <table>
             <tr>
                 <th>No</th>
@@ -155,27 +217,17 @@ $supplier_result = $config->query($supplier_query);
                 <td><?= $supplier['alamat']; ?></td>
                 <td><?= $supplier['telepon']; ?></td>
                 <td>
-                    <!-- Update and Delete buttons -->
+                    <a href="supplier.php?id=<?= $supplier['id_supplier']; ?>">
+                        <button class="button btn-update">Update</button>
+                    </a>
                     <form method="POST" style="display:inline;">
                         <input type="hidden" name="id_supplier" value="<?= $supplier['id_supplier']; ?>">
                         <button type="submit" name="delete" class="button btn-delete">Delete</button>
-                    </form>
-                    <form method="POST" style="display:inline;">
-                        <input type="hidden" name="id_supplier" value="<?= $supplier['id_supplier']; ?>">
-                        <input type="text" name="nama_supplier" value="<?= $supplier['nama_supplier']; ?>" required>
-                        <input type="text" name="alamat" value="<?= $supplier['alamat']; ?>" required>
-                        <input type="text" name="telepon" value="<?= $supplier['telepon']; ?>" required>
-                        <button type="submit" name="update" class="button btn-update">Update</button>
                     </form>
                 </td>
             </tr>
             <?php endwhile; ?>
         </table>
-    </div>
-
-    <!-- Footer -->
-    <div class="footer">
-        &copy; 2024 Toko Baju
     </div>
 </body>
 </html>
