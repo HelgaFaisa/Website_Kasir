@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sidebar dengan Submenu</title>
+    <title>Dashboard dengan Sidebar</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
         /* Styling untuk Sidebar */
@@ -16,56 +16,103 @@
             background-color: #333;
             color: white;
             padding-top: 20px;
-            z-index: 9999; /* Pastikan sidebar berada di atas elemen lainnya */
+            z-index: 9999;
+            transition: transform 0.3s ease;
         }
-        .sidebar .sidebar-menu {
+
+        .sidebar-menu {
             list-style-type: none;
             padding: 0;
         }
-        .sidebar .sidebar-menu li {
+
+        .sidebar-menu li {
             padding: 10px;
             border-bottom: 1px solid #444;
         }
-        .sidebar .sidebar-menu li a {
+
+        .sidebar-menu li a {
             color: white;
             text-decoration: none;
             display: block;
             padding: 5px;
         }
-        .sidebar .sidebar-menu li a:hover {
+
+        .sidebar-menu li a:hover {
             background-color: #575757;
         }
-        /* Styling untuk Submenu */
+
         .submenu {
-            display: none; /* Disembunyikan secara default */
+            display: none;
             list-style-type: none;
             padding-left: 20px;
-            background-color: #444; /* Warna background submenu */
+            background-color: #444;
+            margin-top: 5px;
         }
+
         .submenu li {
             padding: 8px 10px;
             border-bottom: 1px solid #555;
         }
+
         .submenu li a {
-            color: #ddd; /* Warna teks submenu */
+            color: #ddd;
         }
+
         .submenu li a:hover {
             background-color: #666;
         }
-        /* Menampilkan submenu ketika menu-toggle diaktifkan */
+
         .menu-toggle.active .submenu {
             display: block;
+        }
+
+        .menu-toggle-button {
+            display: none;
+            font-size: 24px;
+            color: white;
+            background-color: #333;
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-250px);
+                width: 250px;
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .menu-toggle-button {
+                display: block;
+            }
+        }
+
+        /* Styling untuk Kontainer Konten */
+        .content-container {
+            margin-left: 260px;
+            padding: 20px;
         }
     </style>
 </head>
 <body>
 
+<!-- Tombol Menu untuk Mobile -->
+<button class="menu-toggle-button" onclick="toggleSidebar()">
+    <i class="fas fa-bars"></i>
+</button>
+
+<!-- Sidebar -->
 <div class="sidebar">
     <ul class="sidebar-menu">
-        <!-- Menu Dashboard -->
         <li><a href="index.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
 
-        <!-- Menu Data Master -->
         <li class="menu-toggle">
             <a href="javascript:void(0)"><i class="fas fa-cogs"></i> Data Master</a>
             <ul class="submenu">
@@ -75,47 +122,68 @@
             </ul>
         </li>
 
-        <!-- Menu Transaksi dengan Submenu -->
         <li class="menu-toggle">
             <a href="javascript:void(0)"><i class="fas fa-exchange-alt"></i> Transaksi</a>
             <ul class="submenu">
                 <li><a href="penjualan.php"><i class="fas fa-shopping-cart"></i> Penjualan</a></li>
-                <li><a href="laporan.php"><i class="fas fa-chart-bar"></i> Laporan Penjualan</a></li>
+                <li><a href="laporan_penjualan.php"><i class="fas fa-file-alt"></i> Laporan Penjualan</a></li>
             </ul>
         </li>
 
-        <!-- Menu Restok dengan Submenu -->
+        <!-- Menu Restok dan Submenu Laporan Pembelian -->
         <li class="menu-toggle">
-            <a href="javascript:void(0)"><i class="fas fa-box"></i> Restok</a>
+            <a href="javascript:void(0)"><i class="fas fa-sync-alt"></i> Restok</a>
             <ul class="submenu">
-                <li><a href="laporan_pembelian.php"><i class="fas fa-file-invoice"></i> Laporan Pembelian</a></li>
+                <li><a href="laporan_pembelian.php"><i class="fas fa-file-alt"></i> Laporan Pembelian</a></li>
             </ul>
         </li>
 
-        <!-- Menu Pengembalian sebagai menu terpisah -->
         <li><a href="pengembalian.php"><i class="fas fa-undo"></i> Pengembalian</a></li>
 
-        <!-- Menu lainnya -->
-        <li><a href="pengaturan.php"><i class="fas fa-cogs"></i> Pengaturan Toko</a></li>
+
+        <li class="menu-toggle">
+            <a href="javascript:void(0)"><i class="fas fa-cogs"></i> Pengaturan Toko</a>
+            <ul class="submenu">
+                <li><a href="javascript:void(0)" data-page="log_aktivitas.php"><i class="fas fa-history"></i> Log Aktivitas</a></li>
+            </ul>
+        </li>
     </ul>
 </div>
 
-<!-- JavaScript untuk Toggle Submenu -->
+<!-- Kontainer untuk menampilkan konten yang dimuat melalui AJAX -->
+<div class="content-container" id="content-container">
+    <!-- Konten akan dimuat di sini -->
+</div>
+
+<!-- JavaScript untuk Toggle Submenu dan Sidebar -->
 <script>
-    // Mendapatkan semua elemen dengan kelas 'menu-toggle'
     document.querySelectorAll('.menu-toggle').forEach(function(menu) {
         menu.addEventListener('click', function() {
-            // Mengecek apakah menu sudah aktif atau belum
             if (menu.classList.contains('active')) {
-                // Jika menu sudah aktif, tutup submenu dan hilangkan class 'active' dari menu
                 menu.classList.remove('active');
             } else {
-                // Jika menu belum aktif, buka submenu dan aktifkan class 'active'
                 document.querySelectorAll('.menu-toggle').forEach(function(otherMenu) {
-                    otherMenu.classList.remove('active'); // Tutup semua submenu
+                    otherMenu.classList.remove('active');
                 });
-                menu.classList.add('active'); // Menampilkan submenu yang diklik
+                menu.classList.add('active');
             }
+        });
+    });
+
+    function toggleSidebar() {
+        document.querySelector('.sidebar').classList.toggle('active');
+    }
+
+    // AJAX untuk memuat konten halaman log_aktivitas.php
+    document.querySelectorAll('[data-page]').forEach(link => {
+        link.addEventListener('click', function() {
+            const page = this.getAttribute('data-page');
+            fetch(page)
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('content-container').innerHTML = data;
+                })
+                .catch(error => console.error('Error:', error));
         });
     });
 </script>
