@@ -72,7 +72,7 @@ $monthlySalesData = getMonthlySalesData();
 
         /* Navbar Styling */
         .navbar {
-            background-color: #343a40;
+            background-color: #800000;
             color: #ffffff;
             padding: 1rem 2rem;
             display: flex;

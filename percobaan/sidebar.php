@@ -13,7 +13,7 @@
             position: fixed;
             top: 0;
             left: 0;
-            background-color: #333;
+            background-color: #800000;
             color: white;
             padding-top: 20px;
             z-index: 9999;
@@ -38,14 +38,14 @@
         }
 
         .sidebar-menu li a:hover {
-            background-color: #575757;
+            background-color: #CD3F3E;
         }
 
         .submenu {
             display: none;
             list-style-type: none;
             padding-left: 20px;
-            background-color: #444;
+            background-color: #800000;
             margin-top: 5px;
         }
 
@@ -59,7 +59,7 @@
         }
 
         .submenu li a:hover {
-            background-color: #666;
+            background-color: #CD3F3E;
         }
 
         .menu-toggle.active .submenu {
