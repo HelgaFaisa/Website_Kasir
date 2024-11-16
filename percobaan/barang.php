@@ -12,7 +12,7 @@ $nama_barang = $id_kategori = $harga_beli = $harga_jual = $satuan_barang = $stok
 $btn_text = 'Tambah Barang'; // Tombol default untuk tambah barang
 $id_barang_update = null; // Variabel untuk ID barang yang sedang diupdate
 
-// Fungsi untuk menangani aksi CRUD
+// Menangani form input
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['submit'])) {
         if ($btn_text === 'Tambah Barang') {
@@ -45,6 +45,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $stmt->bind_param("siissisi", $nama_barang, $id_kategori, $harga_beli, $harga_jual, $satuan_barang, $stok, $tgl_update, $id_barang);
             $stmt->execute();
             $stmt->close();
+
+            echo "<script>alert('Data berhasil di-update');</script>";
         }
 
         // Reset form setelah menambah atau mengupdate barang
@@ -114,50 +116,20 @@ $barang_result = $config->query($barang_query_all);
     <title>Barang - Toko Baju</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-                /* CSS */
-        * {
-            box-sizing: border-box;
-        }
-
+        /* CSS */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-        }
-
-        .container {
-            display: flex;
-            flex-wrap: wrap;
-            padding: 15px;
-            width: 100%;
-        }
-
-        .sidebar {
-            width: 250px;
-            background-color: #333;
-            color: white;
-            height: 100vh;
-            padding: 15px;
-            position: fixed;
-        }
-
-        .sidebar a {
-            color: white;
-            text-decoration: none;
-            display: block;
-            padding: 8px;
-            margin: 5px 0;
-            border-radius: 4px;
-        }
-
-        .sidebar a:hover {
-            background-color: #444;
+            background-color: #f0f0f5;
         }
 
         .main-content {
-            margin-left: 250px;
-            width: calc(100% - 250px);
-            padding: 15px;
+            margin-left: 270px;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.1);
         }
 
         h1 {
@@ -165,11 +137,90 @@ $barang_result = $config->query($barang_query_all);
             color: #333;
         }
 
-        .form-container {
+        .btn-add {
+            background-color: #800000;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
             margin-bottom: 20px;
-            background-color: #f9f9f9;
-            padding: 15px;
-            border-radius: 8px;
+        }
+
+        .btn-add:hover {
+            background-color: #982B1C;
+        }
+
+        .search-bar {
+            float: right;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 8px; /* Memberikan jarak antara input dan button */
+        }
+
+        .search-bar input {
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .search-bar input:focus {
+            outline: none;
+            border-color: #800000; /* Warna maroon saat input difokuskan */
+            box-shadow: 0 0 5px rgba(128, 0, 0, 0.2);
+        }
+
+        .search-bar button {
+            padding: 8px 16px;
+            background-color: #800000; /* Warna maroon untuk button */
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        .search-bar button:hover {
+            background-color: #982B1C; /* Warna maroon yang lebih gelap saat hover */
+        }
+        /* Pop-up form styling */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding-top: 50px;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 50%;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
         }
 
         .form-container label {
@@ -188,130 +239,126 @@ $barang_result = $config->query($barang_query_all);
         }
 
         .form-container button {
-            display: inline-block;
             background-color: #4CAF50;
             color: white;
+            border: none;
+            padding: 10px;
             border-radius: 5px;
-            padding: 10px 15px;
-            margin-top: 10px;
             cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .form-container button:hover {
+            background-color: #45a049;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.1);
         }
 
         th, td {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
         }
 
         th {
-            background-color: #f2f2f2;
+            background-color: #800000;
+            color: white;
+            font-weight: bold;
         }
 
-        .button {
-            padding: 8px 15px;
-            margin: 5px;
-            cursor: pointer;
+        tr:hover {
+            background-color: #f0f0f0;
+        }
+
+        .btn-update, .btn-delete {
+            padding: 5px;
             border: none;
             border-radius: 5px;
-        }
-
-        .btn-add {
-            background-color: #4CAF50;
-            color: white;
+            cursor: pointer;
         }
 
         .btn-update {
-            background-color: #007bff;
-            color: white;
+            background-color: #ffc107;
+            color: black;
         }
 
         .btn-delete {
-            background-color: #f44336;
+            background-color: #dc3545;
             color: white;
         }
 
-        @media (max-width: 768px) {
-            .container {
-                flex-direction: column;
-            }
-
-            .sidebar {
-                width: 100%;
-                height: auto;
-                position: relative;
-                padding: 10px;
-            }
-
-            .main-content {
-                margin-left: 0;
-                width: 100%;
-            }
+        .btn-delete:hover {
+            background-color: #c82333;
         }
     </style>
 </head>
 <body>
     <!-- Sidebar -->
-    <div class="sidebar">
-        <?php include('sidebar.php'); ?>
-    </div>
-
-    <!-- Main Content -->
+    <?php include('sidebar.php'); ?>
     <div class="main-content">
         <h1>Data Barang</h1>
 
-
-        <!-- Form untuk Menambahkan atau Mengupdate Barang -->
-        <div class="form-container">
-            <form method="POST" action="barang.php">
-                <input type="hidden" name="id_barang" value="<?= htmlspecialchars($id_barang_update); ?>">
-                <label for="nama_barang">Nama Barang:</label>
-                <input type="text" id="nama_barang" name="nama_barang" value="<?= htmlspecialchars($nama_barang); ?>" required><br>
-
-                <label for="id_kategori">Kategori:</label>
-                <select name="id_kategori" id="id_kategori" required>
-                    <option value="">-- Pilih Kategori --</option>
-                    <?php while ($kategori = $kategori_result->fetch_assoc()): ?>
-                        <option value="<?= $kategori['id_kategori']; ?>" <?= $id_kategori == $kategori['id_kategori'] ? 'selected' : ''; ?>>
-                            <?= htmlspecialchars($kategori['nama_kategori']); ?>
-                        </option>
-                    <?php endwhile; ?>
-                </select><br>
-
-                <label for="harga_beli">Harga Beli:</label>
-                <input type="number" id="harga_beli" name="harga_beli" value="<?= htmlspecialchars($harga_beli); ?>" required><br>
-
-                <label for="harga_jual">Harga Jual:</label>
-                <input type="number" id="harga_jual" name="harga_jual" value="<?= htmlspecialchars($harga_jual); ?>" required><br>
-
-                <label for="satuan_barang">Satuan Barang:</label>
-                <input type="text" id="satuan_barang" name="satuan_barang" value="<?= htmlspecialchars($satuan_barang); ?>" required><br>
-
-                <label for="stok">Stok:</label>
-                <input type="number" id="stok" name="stok" value="<?= htmlspecialchars($stok); ?>" required><br>
-
-                <button type="submit" name="submit" class="button <?= $btn_text === 'Update Barang' ? 'btn-update' : 'btn-add'; ?>">
-                    <?= htmlspecialchars($btn_text); ?>
-                </button>
-                <?php if ($btn_text === 'Update Barang'): ?>
-                    <a href="barang.php" class="button">Batal</a>
-                <?php endif; ?>
-            </form>
-        </div>
-
-        <!-- Form pencarian -->
-        <div style="text-align: right; margin-bottom: 15px;">
+        <!-- Search bar -->
+        <div class="search-bar">
             <form method="GET" action="barang.php">
-                <input type="text" name="search" placeholder="Cari barang..." value="<?= htmlspecialchars($search); ?>">
-                <button type="submit">Cari</button>
+                <input type="text" name="search" placeholder="Cari Barang..." value="<?= htmlspecialchars($search); ?>">
+                <button type="submit">Search</button>
             </form>
         </div>
 
-        <!-- Tabel Barang -->
+        <button class="btn-add" onclick="openModal()"><?= htmlspecialchars($btn_text); ?></button>
+
+        <!-- Modal Form -->
+        <div id="barangModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal()">&times;</span>
+                <h2>Form Barang</h2>
+                <form method="POST" action="barang.php" class="form-container">
+                    <input type="hidden" name="id_barang" value="<?= htmlspecialchars($id_barang_update); ?>">
+                    <label for="nama_barang">Nama Barang:</label>
+                    <input type="text" id="nama_barang" name="nama_barang" value="<?= htmlspecialchars($nama_barang); ?>" required>
+
+                    <label for="id_kategori">Kategori:</label>
+                    <select name="id_kategori" id="id_kategori" required>
+                        <option value="">-- Pilih Kategori --</option>
+                        <?php while ($kategori = $kategori_result->fetch_assoc()): ?>
+                            <option value="<?= $kategori['id_kategori']; ?>" <?= $id_kategori == $kategori['id_kategori'] ? 'selected' : ''; ?>>
+                                <?= htmlspecialchars($kategori['nama_kategori']); ?>
+                            </option>
+                        <?php endwhile; ?>
+                    </select>
+
+                    <label for="harga_beli">Harga Beli:</label>
+                    <input type="number" id="harga_beli" name="harga_beli" value="<?= htmlspecialchars($harga_beli); ?>" required>
+
+                    <label for="harga_jual">Harga Jual:</label>
+                    <input type="number" id="harga_jual" name="harga_jual" value="<?= htmlspecialchars($harga_jual); ?>" required>
+
+                    <label for="satuan_barang">Satuan Barang:</label>
+                    <input type="text" id="satuan_barang" name="satuan_barang" value="<?= htmlspecialchars($satuan_barang); ?>" required>
+
+                    <label for="stok">Stok:</label>
+                    <input type="number" id="stok" name="stok" value="<?= htmlspecialchars($stok); ?>" required>
+
+                    <button type="submit" name="submit"><?= htmlspecialchars($btn_text); ?></button>
+                    <button type="button" onclick="closeModal()">Batal</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Tabel Data Barang -->
         <table>
             <thead>
                 <tr>
@@ -340,10 +387,10 @@ $barang_result = $config->query($barang_query_all);
                         <td><?= htmlspecialchars($row['tgl_input']); ?></td>
                         <td><?= htmlspecialchars($row['tgl_update']); ?></td>
                         <td>
-                            <a href="barang.php?edit=<?= $row['id_barang']; ?>" class="button btn-update">Edit</a>
+                            <a href="barang.php?edit=<?= $row['id_barang']; ?>" class="btn-update">Edit</a>
                             <form method="POST" action="barang.php" style="display:inline;">
                                 <input type="hidden" name="id_barang" value="<?= $row['id_barang']; ?>">
-                                <button type="submit" name="delete" class="button btn-delete" onclick="return confirm('Apakah Anda yakin ingin menghapus barang ini?')">Hapus</button>
+                                <button type="submit" name="delete" class="btn-delete" onclick="return confirm('Apakah Anda yakin ingin menghapus barang ini?')">Hapus</button>
                             </form>
                         </td>
                     </tr>
@@ -351,5 +398,22 @@ $barang_result = $config->query($barang_query_all);
             </tbody>
         </table>
     </div>
+
+    <script>
+        function openModal() {
+            document.getElementById('barangModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('barangModal').style.display = 'none';
+            window.location.href = 'barang.php'; // Refresh halaman agar form kosong saat modal ditutup
+        }
+
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('barangModal')) {
+                closeModal();
+            }
+        }
+    </script>
 </body>
 </html>
