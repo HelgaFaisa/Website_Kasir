@@ -87,25 +87,32 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
             color: #6c757d;
             opacity: 1;
         }
+
+        .table-responsive {
+            overflow-x: auto;
+            padding: 1px;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
+            white-space: nowrap;
         }
         th, td {
             padding: 12px 15px;
-            text-align: left;
-            border: 1px solid #dee2e6;
+            text-align: center;
+            border: 1px solid #ddd;
         }
         th {
-            background-color: #343a40;
-            color: #ffffff;
+            background-color: #800000;
+            color: white;
         }
         tr:nth-child(even) {
-            background-color: #f2f2f2;
+            background-color: #f9f9f9;
         }
         tr:hover {
-            background-color: #e9ecef;
+            background-color: #f5f5f5;
         }
         .button {
             padding: 8px 15px;
@@ -115,7 +122,7 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
             margin: 2px;
         }
         .btn-add {
-            background-color: #28a745;
+            background-color: #800000;
             color: white;
         }
         .btn-update {
@@ -133,7 +140,7 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
             background-color: #0069d9;
         }
         .btn-add:hover {
-            background-color: #218838;
+            background-color: #982B1C
         }
         .search-form {
             display: flex;
@@ -149,7 +156,7 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
         .search-form button {
             padding: 8px 15px;
             margin-left: 5px;
-            background-color: #007bff;
+            background-color: #800000;
             color: white;
             border: none;
             border-radius: 5px;

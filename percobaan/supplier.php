@@ -80,6 +80,11 @@ if (isset($_GET['id'])) {
             border-radius: 8px;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
         }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -87,18 +92,21 @@ if (isset($_GET['id'])) {
         }
         th, td {
             padding: 12px 15px;
-            text-align: left;
-            border: 1px solid #dee2e6;
+            text-align: center;
+            border: 1px solid #ddd;
+            white-space: nowrap;
         }
+
         th {
-            background-color: #343a40;
-            color: #ffffff;
+            background-color: #800000;
+            color: white;
+            font-weight: bold;
         }
         tr:nth-child(even) {
-            background-color: #f2f2f2;
+            background-color:  #f9f9f9;
         }
         tr:hover {
-            background-color: #e9ecef;
+            background-color:  #f0f0f0;
         }
         .button {
             padding: 8px 15px;
@@ -108,7 +116,7 @@ if (isset($_GET['id'])) {
             margin: 2px;
         }
         .btn-add {
-            background-color: #28a745;
+            background-color: #800000;
             color: white;
         }
         .btn-update {
@@ -126,7 +134,7 @@ if (isset($_GET['id'])) {
             background-color: #0069d9;
         }
         .btn-add:hover {
-            background-color: #218838;
+            background-color: #982B1C;
         }
         .search-form {
             display: flex;
@@ -142,7 +150,7 @@ if (isset($_GET['id'])) {
         .search-form button {
             padding: 8px 15px;
             margin-left: 5px;
-            background-color: #007bff;
+            background-color: #800000;
             color: white;
             border: none;
             border-radius: 5px;
@@ -190,12 +198,34 @@ if (isset($_GET['id'])) {
             <button type="submit" name="<?= isset($edit_supplier) ? 'update' : 'submit'; ?>" class="button btn-add"><?= isset($edit_supplier) ? 'Update Data' : 'Tambah Supplier'; ?></button>
         </form>
 
-        <!-- Form pencarian -->
-        <form method="GET" action="supplier.php" class="search-form">
-            <input type="text" name="search" placeholder="Cari Supplier" required>
+                <!-- Form pencarian supplier -->
+        <form method="GET" action="supplier.php" class="search-form" id="supplierSearchForm">
+            <input type="text" name="search" placeholder="Cari Supplier" id="supplierSearchInput" value="<?= htmlspecialchars($_GET['search'] ?? ''); ?>">
             <button type="submit" class="button btn-update">Search</button>
         </form>
 
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchForm = document.getElementById('supplierSearchForm');
+            const searchInput = document.getElementById('supplierSearchInput');
+
+            // Monitor input changes
+            searchInput.addEventListener('input', function() {
+                if (this.value.trim() === '') {
+                    // Redirect to supplier.php without search parameter when input is empty
+                    window.location.href = 'supplier.php';
+                }
+            });
+
+            // Handle form submission
+            searchForm.addEventListener('submit', function(e) {
+                if (searchInput.value.trim() === '') {
+                    e.preventDefault(); // Prevent form submission if empty
+                    window.location.href = 'supplier.php';
+                }
+            });
+        });
+        </script>
         <!-- Tabel Data Supplier -->
         <table>
             <tr>
