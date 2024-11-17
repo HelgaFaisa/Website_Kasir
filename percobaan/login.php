@@ -18,21 +18,54 @@ if(isset($_POST['login'])){
         // Verifikasi password dengan hash
         if(password_verify($password, $verif['password'])){
             if($verif['is_verif'] == 1){
-                $_SESSION['user'] = $verif; // Menyimpan data user ke session
+                // Menyimpan data user ke session
+                $_SESSION['user'] = $verif; // Menyimpan semua data pengguna
+
+                // Tentukan role admin jika email adalah admin
+                if ($verif['email'] == 'admin@domain.com') {
+                    $_SESSION['user']['role'] = 'admin';  // Menyimpan role admin di session
+                } else {
+                    $_SESSION['user']['role'] = 'user';  // Menyimpan role user di session
+                }
+
+                // Ambil IP address pengguna
+                $ip_address = $_SERVER['REMOTE_ADDR'];
+                $id_pengguna = $verif['id'];  // Ambil id pengguna dari tabel login
+                $aktivitas = "Login berhasil";
+
+                // Menyimpan aktivitas login ke log_aktivitas
+                $log_stmt = $config->prepare("INSERT INTO log_aktivitas (id_pengguna, aktivitas, ip_address) VALUES (?, ?, ?)");
+                $log_stmt->bind_param("iss", $id_pengguna, $aktivitas, $ip_address);
+                $log_stmt->execute();
+
                 header("location:index.php"); // Redirect ke index.php setelah login berhasil
                 exit;
             } else {
                 $error_message = 'Harap Verifikasi Akun Anda!';
+                // Log aktivitas login gagal - Verifikasi akun diperlukan
+                $aktivitas = "Login gagal - Verifikasi akun diperlukan";
+                $log_stmt = $config->prepare("INSERT INTO log_aktivitas (id_pengguna, aktivitas, ip_address) VALUES (?, ?, ?)");
+                $log_stmt->bind_param("iss", $verif['id'], $aktivitas, $_SERVER['REMOTE_ADDR']);
+                $log_stmt->execute();
             }
         } else {
             $error_message = 'Password salah!';
+            // Log aktivitas login gagal - Password salah
+            $aktivitas = "Login gagal - Password salah";
+            $log_stmt = $config->prepare("INSERT INTO log_aktivitas (id_pengguna, aktivitas, ip_address) VALUES (?, ?, ?)");
+            $log_stmt->bind_param("iss", $verif['id'], $aktivitas, $_SERVER['REMOTE_ADDR']);
+            $log_stmt->execute();
         }
     } else {
         $error_message = 'Email tidak terdaftar!';
+        // Log aktivitas login gagal - Email tidak terdaftar
+        $aktivitas = "Login gagal - Email tidak terdaftar";
+        $log_stmt = $config->prepare("INSERT INTO log_aktivitas (id_pengguna, aktivitas, ip_address) VALUES (?, ?, ?)");
+        $log_stmt->bind_param("iss", $verif['id'], $aktivitas, $_SERVER['REMOTE_ADDR']);
+        $log_stmt->execute();
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -40,10 +73,9 @@ if(isset($_POST['login'])){
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
     <style>
-        /* Mengatur styling dasar untuk body */
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            background: linear-gradient(135deg, #f8e5e5 0%, #ffe6e6 100%);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -51,87 +83,126 @@ if(isset($_POST['login'])){
             margin: 0;
         }
 
-        /* Mengatur styling untuk form */
-        form {
+        .login-container {
             background-color: #fff;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            width: 300px;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 8px 24px rgba(128, 0, 0, 0.15);
+            width: 320px;
+            border: 1px solid #ffeded;
         }
 
-        /* Styling untuk judul dan elemen form */
-        h2 {
+        .login-header {
             text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header h2 {
+            color: #800000;
+            font-size: 28px;
+            margin: 0;
+        }
+
+        .form-group {
             margin-bottom: 20px;
         }
 
-        form div {
-            margin-bottom: 15px;
-        }
-
-        /* Styling untuk label input */
-        form label {
+        .form-group label {
             display: block;
-            font-weight: bold;
-            margin-bottom: 5px;
-            color: #6c2a2a; /* Warna maroon */
+            color: #800000;
+            margin-bottom: 8px;
+            font-weight: 500;
         }
 
-        /* Styling untuk input field */
-        form input[type="text"], form input[type="password"] {
+        .form-group input {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
+            padding: 12px;
+            border: 2px solid #ffcccc;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
             box-sizing: border-box;
         }
 
-        /* Styling untuk tombol */
-        form button {
+        .form-group input:focus {
+            outline: none;
+            border-color: #800000;
+            box-shadow: 0 0 5px rgba(128, 0, 0, 0.2);
+        }
+
+        .submit-btn {
             width: 100%;
-            padding: 12px;
-            background-color: #800000; /* Warna merah maroon */
+            padding: 14px;
+            background-color: #800000;
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 8px;
             font-size: 16px;
             cursor: pointer;
             transition: background-color 0.3s;
         }
 
-        /* Efek hover untuk tombol */
-        form button:hover {
-            background-color: #660000; /* Warna maroon lebih gelap */
+        .submit-btn:hover {
+            background-color: #600000;
         }
 
-        /* Styling untuk pesan kesalahan */
-        p {
+        .forgot-password {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .forgot-password a {
+            color: #800000;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+
+        .forgot-password a:hover {
+            color: #600000;
+            text-decoration: underline;
+        }
+
+        .error-message {
+            color: #d63031;
             text-align: center;
             font-size: 14px;
-            color: red; /* Warna merah untuk pesan kesalahan */
+            margin-top: 15px;
+        }
+
+        /* Tambahan efek hover untuk input */
+        .form-group input:hover {
+            border-color: #cc0000;
+        }
+
+        /* Efek focus untuk container */
+        .login-container:hover {
+            box-shadow: 0 12px 28px rgba(128, 0, 0, 0.2);
         }
     </style>
 </head>
 <body>
-
-<form action="login.php" method="post">
-    <h2>Login</h2>
-    <div>
-        <label for="email">Email</label>
-        <input type="text" name="email" required>
+    <div class="login-container">
+        <div class="login-header">
+            <h2>Login</h2>
+        </div>
+        <form action="login.php" method="post">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit" name="login" class="submit-btn">Login</button>
+            <?php if (isset($error_message)): ?>
+                <div class="error-message"><?php echo $error_message; ?></div>
+            <?php endif; ?>
+            <div class="forgot-password">
+                <a href="forgot_password.php">Lupa Password?</a>
+            </div>
+        </form>
     </div>
-    <div>
-        <label for="password">Password</label>
-        <input type="password" name="password" required>
-    </div>
-    <button type="submit" name="login">Login</button>
-    <!-- Menampilkan pesan kesalahan jika ada -->
-    <?php if (isset($error_message)): ?>
-        <p><?php echo $error_message; ?></p>
-    <?php endif; ?>
-</form>
-
 </body>
 </html>
