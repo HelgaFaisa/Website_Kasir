@@ -7,63 +7,66 @@ if (!isset($_SESSION['user'])) {
 
 require_once 'config.php';
 
-// Fungsi untuk menangani aksi CRUD
+// Menangani aksi CRUD untuk restock
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['submit'])) {
-        // Menambahkan restock baru
-        $id_restock = $_POST['id_restock'];
+        // Menambahkan data restock baru
         $id_supplier = $_POST['id_supplier'];
         $nama_barang = $_POST['nama_barang'];
         $tanggal_restock = $_POST['tanggal_restock'];
-        $harga_beli = $_POST['harga_beli'];
         $jumlah = $_POST['jumlah'];
-        $harga_total = $harga_beli * $jumlah; // Hitung harga total
+        $harga_beli = $_POST['harga_beli'];
+        $harga_total = $_POST['harga_total'];
 
-        $stmt = $config->prepare("INSERT INTO restock (id_restock, id_supplier, nama_barang, tanggal_restock, harga_beli, jumlah, harga_total) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("iissdii", $id_restock, $id_supplier, $nama_barang, $tanggal_restock, $harga_beli, $jumlah, $harga_total);
+        $stmt = $config->prepare("INSERT INTO restock 
+            ( id_supplier, nama_barang, tanggal_restock, jumlah, harga_beli, harga_total) 
+            VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("ississ", $id_supplier, $nama_barang, $tanggal_restock, $jumlah, $harga_beli, $harga_total);
         $stmt->execute();
         $stmt->close();
     } elseif (isset($_POST['update'])) {
-        // Mengupdate restock
+        // Mengupdate data restock
         $id_restock = $_POST['id_restock'];
-        $id_supplier = $_POST['id_supplier'];
         $nama_barang = $_POST['nama_barang'];
+        $id_supplier = $_POST['id_supplier'];
         $tanggal_restock = $_POST['tanggal_restock'];
-        $harga_beli = $_POST['harga_beli'];
         $jumlah = $_POST['jumlah'];
-        $harga_total = $harga_beli * $jumlah; // Hitung harga total
+        $harga_beli = $_POST['harga_beli'];
+        $harga_total = $_POST['harga_total'];
 
-        $stmt = $config->prepare("UPDATE restock SET id_supplier = ?, nama_barang = ?, tanggal_restock = ?, harga_beli = ?, jumlah = ?, harga_total = ? WHERE id_restock = ?");
-        $stmt->bind_param("issdiii", $id_supplier, $nama_barang, $tanggal_restock, $harga_beli, $jumlah, $harga_total, $id_restock);
+        $stmt = $config->prepare("UPDATE restock SET nama_barang = ?, id_supplier = ?, tanggal_restock = ?, jumlah = ?, harga_beli = ?, harga_total = ? WHERE id_restock = ?");
+        $stmt->bind_param("ississ", $nama_barang, $id_supplier, $tanggal_restock, $jumlah, $harga_beli, $harga_total, $id_restock);
         $stmt->execute();
         $stmt->close();
     } elseif (isset($_POST['delete'])) {
-        // Menghapus restock
-        $id_restock = $_POST['id_restock'];
+        // Menghapus data restock
+        $id_restock_data = $_POST['id_restock_data'];
 
         $stmt = $config->prepare("DELETE FROM restock WHERE id_restock = ?");
-        $stmt->bind_param("i", $id_restock);
+        $stmt->bind_param("i", $id_restock_data);
         $stmt->execute();
         $stmt->close();
     }
 }
 
-// Menangani pencarian restock
-$search_term = "";
-if (isset($_GET['search']) && !empty($_GET['search'])) {
-    $search_term = $_GET['search'];
-    $restock_query = "SELECT * FROM restock WHERE id_supplier LIKE ? ORDER BY id_restock DESC";
+// Proses pencarian
+$search_term = '';
+if (isset($_POST['search'])) {
+    $search_term = $_POST['search_term'];
+    $restock_query = "SELECT * FROM restock WHERE nama_barang LIKE ? OR id_supplier LIKE ? OR harga_beli LIKE ?";
     $stmt = $config->prepare($restock_query);
-    $like_term = "%" . $search_term . "%";
-    $stmt->bind_param("s", $like_term);
+    $search_like = "%$search_term%";
+    $stmt->bind_param("sss", $search_like, $search_like, $search_like);
     $stmt->execute();
     $restock_result = $stmt->get_result();
     $stmt->close();
 } else {
-    // Query untuk menampilkan semua restock
-    $restock_query = "SELECT * FROM restock ORDER BY id_restock DESC";
+    $restock_query = "SELECT * FROM restock";
     $restock_result = $config->query($restock_query);
 }
+
+$supplier_query = "SELECT * FROM supplier";
+$supplier_result = $config->query($supplier_query);
 ?>
 
 <!DOCTYPE html>
@@ -71,124 +74,267 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Restock - Toko Baju</title>
+    <title>Restock Barang - Toko Baju</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* CSS sama seperti sebelumnya */
         body {
             font-family: Arial, sans-serif;
-            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f5;
         }
-        .container {
-            margin-left: 250px;
+
+        .main-content {
+            margin-left: 270px;
             padding: 20px;
             background-color: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.1);
         }
-        input[type="text"], input[type="date"], input[type="number"] {
-            width: 60%;
-            padding: 10px;
-            margin: 5px 0;
+
+        h1 {
+            font-size: 24px;
+            color: #333;
+        }
+
+        .btn-add {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
             border-radius: 5px;
-            border: 1px solid #ced4da;
-            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            margin-bottom: 20px;
         }
+
+        .btn-add:hover {
+            background-color: #0056b3;
+        }
+
+        .search-bar {
+            float: right;
+            margin-bottom: 20px;
+        }
+
+        .search-bar input {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        /* Pop-up form styling */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding-top: 50px;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 50%;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .form-container label {
+            margin-top: 10px;
+            display: block;
+            font-weight: bold;
+        }
+
+        .form-container input,
+        .form-container select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .form-container button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .form-container button:hover {
+            background-color: #45a049;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.1);
         }
+
         th, td {
-            padding: 12px 15px;
+            padding: 12px;
             text-align: left;
-            border: 1px solid #dee2e6;
+            border-bottom: 1px solid #ddd;
         }
+
         th {
-            background-color: #343a40;
-            color: #ffffff;
+            background-color: #000000;
+            color: white;
         }
-        .button {
-            padding: 8px 15px;
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .btn-update, .btn-delete {
+            padding: 5px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            margin: 2px;
         }
-        .btn-add { background-color: #28a745; color: white; }
-        .btn-update { background-color: #007bff; color: white; }
-        .btn-delete { background-color: #dc3545; color: white; }
-        .search-form input[type="text"] { width: 250px; padding: 8px; border-radius: 5px; border: 1px solid #ced4da; }
+
+        .btn-update {
+            background-color: #ffc107;
+            color: black;
+        }
+
+        .btn-delete {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background-color: #c82333;
+        }
     </style>
-    <script>
-        function editRestock(id, supplier, barang, tanggal, jumlah, harga, total) {
-            document.getElementById('id_restock').value = id;
-            document.getElementById('id_supplier').value = supplier;
-            document.getElementById('nama_barang').value = barang;
-            document.getElementById('tanggal_restock').value = tanggal;
-            document.getElementById('harga_beli').value = harga;
-            document.getElementById('jumlah').value = jumlah;
-            document.getElementById('harga_total').value = total;
-            document.getElementById('submitBtn').style.display = 'none';
-            document.getElementById('updateBtn').style.display = 'inline';
-        }
-    </script>
 </head>
 <body>
-    <!-- Sidebar -->
     <?php include('sidebar.php'); ?>
+    <div class="main-content">
+        <h1>Data Restock Barang</h1>
 
-    <!-- Main Content -->
-    <div class="container">
-        <h1>Data Restock</h1>
+        <!-- Search bar -->
+        <div class="search-bar">
+            <form method="POST" action="restock.php">
+                <input type="text" name="search_term" placeholder="Cari..." value="<?= htmlspecialchars($search_term); ?>">
+                <button type="submit" name="search" class="btn btn-primary">Search</button>
+            </form>
+        </div>
 
-        <form method="POST" action="restock.php" style="display: flex; align-items: center;">
-            <input type="hidden" id="id_restock" name="id_restock">
-            <input type="text" id="id_supplier" name="id_supplier" placeholder="ID Supplier" required>
-            <input type="text" id="nama_barang" name="nama_barang" placeholder="Nama Barang" required>
-            <input type="date" id="tanggal_restock" name="tanggal_restock" required>
-            <input type="number" id="jumlah" name="jumlah" placeholder="Jumlah" required>
-            <input type="number" id="harga_beli" name="harga_beli" placeholder="Harga Beli" required>
-            <input type="number" id="harga_total" name="harga_total" placeholder="Harga Total" readonly>
-            <button type="submit" id="submitBtn" name="submit" class="button btn-add">Insert</button>
-            <button type="submit" id="updateBtn" name="update" class="button btn-update" style="display:none;">Update</button>
-        </form>
+        <!-- Button to open the add modal -->
+        <button class="btn-add" onclick="openAddForm()">Tambah Data Restock</button>
 
-        <!-- Search Form -->
-        <form method="GET" action="restock.php" class="search-form">
-            <input type="text" name="search" placeholder="Search" value="<?= htmlspecialchars($search_term); ?>">
-            <button type="submit" class="button btn-update">Search</button>
-        </form>
-
+        <!-- Restock Data Table -->
         <table>
-            <tr>
-                <th>No</th>
-                <th>ID Supplier</th>
-                <th>Nama Barang</th>
-                <th>Tanggal Pembelian</th>
-                <th>Harga Beli</th>
-                <th>Jumlah</th>
-                <th>Harga total</th>
-            </tr>
-            <?php
-            $no = 1;
-            while ($restock = $restock_result->fetch_assoc()):
-            ?>
-            <tr>
-                <td><?= $no++; ?></td>
-                <td><?= $restock['id_restock']; ?></td>
-                <td><?= $restock['id_barang']; ?></td>
-                <td><?= $restock['id_supplier']; ?></td>
-                <td><?= $restock['tanggal_restock']; ?></td>
-                <form method="POST" style="display:inline;">
-                        <input type="hidden" name="id_pengembalian" value="<?= $pengembalian['id_pengembalian']; ?>">
-                        <button type="submit" name="delete" class="button btn-delete">Delete</button>
-                    </form>
-                    <button class="button btn-update" onclick="editPengembalian('<?= $pengembalian['id_pengembalian']; ?>', '<?= $pengembalian['id_restock']; ?>', '<?= $pengembalian['id_supplier']; ?>', '<?= $pengembalian['tanggal_pengembalian']; ?>', '<?= $pengembalian['jumlah']; ?>', '<?= $pengembalian['keterangan']; ?>')">Edit</button>
-                </td>
-            </tr>
-            <?php endwhile; ?>
+            <thead>
+                <tr>
+                    <th>ID Restock</th>
+                    <th>Nama Barang</th>
+                    <th>Supplier</th>
+                    <th>Tanggal Restock</th>
+                    <th>Jumlah</th>
+                    <th>Harga Beli</th>
+                    <th>Total Harga</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php while ($row = $restock_result->fetch_assoc()): ?>
+                    <tr>
+                        <td><?= $row['id_restock']; ?></td>
+                        <td><?= $row['nama_barang']; ?></td>
+                        <td><?= $row['id_supplier']; ?></td>
+                        <td><?= $row['tanggal_restock']; ?></td>
+                        <td><?= $row['jumlah']; ?></td>
+                        <td><?= number_format($row['harga_beli'], 2); ?></td>
+                        <td><?= number_format($row['harga_total'], 2); ?></td>
+                        <td>
+                            <form method="POST" style="display:inline;">
+                                <input type="hidden" name="id_restock_data" value="<?= $row['id_restock']; ?>">
+                                <button type="submit" name="delete" class="btn-delete">Hapus</button>
+                            </form>
+                            <button onclick="openUpdateForm(<?= $row['id_restock']; ?>)" class="btn-update">Edit</button>
+                        </td>
+                    </tr>
+                <?php endwhile; ?>
+            </tbody>
         </table>
     </div>
+
+    <!-- Add modal -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAddForm()">&times;</span>
+            <h2>Tambah Data Restock</h2>
+            <form method="POST" action="restok.php">
+
+                <div class="form-container">
+                    <label for="id_supplier">Supplier</label>
+                    <select name="id_supplier" id="id_supplier" required>
+                        <?php while ($supplier = $supplier_result->fetch_assoc()): ?>
+                            <option value="<?= $supplier['id_supplier']; ?>"><?= $supplier['nama_supplier']; ?></option>
+                        <?php endwhile; ?>
+                    </select>
+
+                    <label for="nama_barang">Nama Barang</label>
+                    <input type="varchar" name="nama_barang" id="nama_barang" required>
+
+                    </select>
+
+                    <label for="tanggal_restock">Tanggal Restock</label>
+                    <input type="date" name="tanggal_restock" id="tanggal_restock" required>
+
+                    <label for="jumlah">Jumlah</label>
+                    <input type="number" name="jumlah" id="jumlah" required>
+
+                    <label for="harga_beli">Harga Beli</label>
+                    <input type="number" name="harga_beli" id="harga_beli" required>
+
+                    <label for="harga_total">Harga Total</label>
+                    <input type="number" name="harga_total" id="harga_total" required>
+
+                    <button type="submit" name="submit">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openAddForm() {
+            document.getElementById('addModal').style.display = "block";
+        }
+
+        function closeAddForm() {
+            document.getElementById('addModal').style.display = "none";
+        }
+    </script>
 </body>
 </html>
