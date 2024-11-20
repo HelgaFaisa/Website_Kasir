@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $harga_total = $_POST['harga_total'];
 
         $stmt = $config->prepare("UPDATE restock SET nama_barang = ?, id_supplier = ?, tanggal_restock = ?, jumlah = ?, harga_beli = ?, harga_total = ? WHERE id_restock = ?");
-        $stmt->bind_param("ississ", $nama_barang, $id_supplier, $tanggal_restock, $jumlah, $harga_beli, $harga_total, $id_restock);
+        $stmt->bind_param("ississ", $id_supplier, $nama_barang, $tanggal_restock, $jumlah, $harga_beli, $harga_total);
         $stmt->execute();
         $stmt->close();
     } elseif (isset($_POST['delete'])) {
@@ -243,7 +243,7 @@ $supplier_result = $config->query($supplier_query);
 
         <!-- Search bar -->
         <div class="search-bar">
-            <form method="POST" action="restock.php">
+            <form method="POST" action="restok.php">
                 <input type="text" name="search_term" placeholder="Cari..." value="<?= htmlspecialchars($search_term); ?>">
                 <button type="submit" name="search" class="btn btn-primary">Search</button>
             </form>
@@ -281,7 +281,7 @@ $supplier_result = $config->query($supplier_query);
                                 <input type="hidden" name="id_restock_data" value="<?= $row['id_restock']; ?>">
                                 <button type="submit" name="delete" class="btn-delete">Hapus</button>
                             </form>
-                            <button onclick="openUpdateForm(<?= $row['id_restock']; ?>)" class="btn-update">Edit</button>
+                            <button onclick="openUpdateForm(<?= $row['id_restock']; ?>)" class="btn-update">update</button>
                         </td>
                     </tr>
                 <?php endwhile; ?>
@@ -313,13 +313,13 @@ $supplier_result = $config->query($supplier_query);
                     <input type="date" name="tanggal_restock" id="tanggal_restock" required>
 
                     <label for="jumlah">Jumlah</label>
-                    <input type="number" name="jumlah" id="jumlah" required>
+                        <input type="number" name="jumlah" id="jumlah" oninput="calculateTotal()" required>
 
-                    <label for="harga_beli">Harga Beli</label>
-                    <input type="number" name="harga_beli" id="harga_beli" required>
+                        <label for="harga_beli">Harga Beli</label>
+                        <input type="number" name="harga_beli" id="harga_beli" oninput="calculateTotal()" required>
 
-                    <label for="harga_total">Harga Total</label>
-                    <input type="number" name="harga_total" id="harga_total" required>
+                        <label for="harga_total">Harga Total</label>
+                        <input type="number" name="harga_total" id="harga_total" readonly>
 
                     <button type="submit" name="submit">Simpan</button>
                 </div>
@@ -328,6 +328,17 @@ $supplier_result = $config->query($supplier_query);
     </div>
 
     <script>
+         function calculateTotal() {
+            const jumlah = document.getElementById('jumlah').value;
+            const hargaBeli = document.getElementById('harga_beli').value;
+            const hargaTotal = document.getElementById('harga_total');
+
+            if (jumlah && hargaBeli) {
+                hargaTotal.value = jumlah * hargaBeli;
+            } else {
+                hargaTotal.value = '';
+            }
+        }
         function openAddForm() {
             document.getElementById('addModal').style.display = "block";
         }

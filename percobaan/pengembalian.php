@@ -12,43 +12,37 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['submit'])) {
         // Menambahkan data pengembalian baru
         $id_restock = $_POST['id_restock'];
-        $id_barang = $_POST['id_barang'];
         $id_supplier = $_POST['id_supplier'];
+        $nama_barang = $_POST['nama_barang'];
         $tanggal_pengembalian = $_POST['tanggal_pengembalian'];
         $jumlah = $_POST['jumlah'];
-        $kondisi_barang = $_POST['kondisi_barang'];
-        $alasan_pengembalian = $_POST['alasan_pengembalian'];
-        $status_pengembalian = $_POST['status_pengembalian'];
-        $total_biaya_pengembalian = $_POST['total_biaya_pengembalian'];
+        $keterangan = $_POST['keterangan'];
 
         $stmt = $config->prepare("INSERT INTO pengembalian 
-            (id_restock, id_barang, id_supplier, tanggal_pengembalian, jumlah, kondisi_barang, alasan_pengembalian, status_pengembalian, total_biaya_pengembalian) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("iiisisssd", $id_restock, $id_barang, $id_supplier, $tanggal_pengembalian, $jumlah, $kondisi_barang, $alasan_pengembalian, $status_pengembalian, $total_biaya_pengembalian);
+            (id_restock, id_supplier, nama_barang, tanggal_pengembalian, jumlah, keterangan) 
+            VALUES (?, ?, ?, ?, ?, ? )");
+        $stmt->bind_param("iissis", $id_restock, $id_supplier, $nama_barang, $tanggal_pengembalian, $jumlah, $keterangan);
         $stmt->execute();
         $stmt->close();
     } elseif (isset($_POST['update'])) {
         // Mengupdate data pengembalian
         $id_pengembalian = $_POST['id_pengembalian'];
         $id_restock = $_POST['id_restock'];
-        $id_barang = $_POST['id_barang'];
         $id_supplier = $_POST['id_supplier'];
+        $nama_barang = $_POST['nama_barang'];
         $tanggal_pengembalian = $_POST['tanggal_pengembalian'];
         $jumlah = $_POST['jumlah'];
-        $kondisi_barang = $_POST['kondisi_barang'];
-        $alasan_pengembalian = $_POST['alasan_pengembalian'];
-        $status_pengembalian = $_POST['status_pengembalian'];
-        $total_biaya_pengembalian = $_POST['total_biaya_pengembalian'];
+        $keterangan = $_POST['keterangan'];
 
-        $stmt = $config->prepare("UPDATE pengembalian SET id_restock = ?, id_barang = ?, id_supplier = ?, tanggal_pengembalian = ?, jumlah = ?, kondisi_barang = ?, alasan_pengembalian = ?, status_pengembalian = ?, total_biaya_pengembalian = ? WHERE id = ?");
-        $stmt->bind_param("iiisisssdi", $id_restock, $id_barang, $id_supplier, $tanggal_pengembalian, $jumlah, $kondisi_barang, $alasan_pengembalian, $status_pengembalian, $total_biaya_pengembalian, $id_pengembalian);
+        $stmt = $config->prepare("UPDATE pengembalian SET id_restock = ?, id_supplier = ?, id_barang = ?, tanggal_pengembalian = ?, jumlah = ?, keterangan = ?, WHERE id= ?");
+        $stmt->bind_param("iiissis", $id_restock, $id_supplier,$nama_barang, $tanggal_pengembalian, $jumlah, $keterangan);
         $stmt->execute();
         $stmt->close();
     } elseif (isset($_POST['delete'])) {
         // Menghapus data pengembalian
         $id_pengembalian = $_POST['id_pengembalian'];
 
-        $stmt = $config->prepare("DELETE FROM pengembalian WHERE id = ?");
+        $stmt = $config->prepare("DELETE FROM pengembalian WHERE id_pengembalian= ?");
         $stmt->bind_param("i", $id_pengembalian);
         $stmt->execute();
         $stmt->close();
@@ -70,6 +64,8 @@ if (isset($_POST['search'])) {
     $pengembalian_query = "SELECT * FROM pengembalian";
     $pengembalian_result = $config->query($pengembalian_query);
 }
+$restock_query = "SELECT * FROM restock";
+$restock_result = $config->query($restock_query);
 
 $barang_query = "SELECT * FROM barang";
 $barang_result = $config->query($barang_query);
@@ -269,7 +265,10 @@ $supplier_result = $config->query($supplier_query);
                     <input type="hidden" name="id_pengembalian" value="">
                     <div class="form-group">
                         <label for="id_restock">ID Restock:</label>
-                        <input type="number" name="id_restock" class="form-control" required>
+                        <select name="id_restock" class="form-control" required>
+                            <?php while ($restock = $restock_result->fetch_assoc()): ?>
+                                <option value="<?= $restock['id_restock'] ?>"><?= $restock['id_restock'] ?></option>
+                            <?php endwhile; ?>
                     </div>
                     <div class="form-group">
                         <label for="id_barang">ID Barang:</label>
@@ -296,20 +295,8 @@ $supplier_result = $config->query($supplier_query);
                         <input type="number" name="jumlah" class="form-control" required>
                     </div>
                     <div class="form-group">
-                        <label for="kondisi_barang">Kondisi Barang:</label>
-                        <input type="text" name="kondisi_barang" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="alasan_pengembalian">Alasan Pengembalian:</label>
-                        <input type="text" name="alasan_pengembalian" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="status_pengembalian">Status Pengembalian:</label>
-                        <input type="text" name="status_pengembalian" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="total_biaya_pengembalian">Total Biaya Pengembalian:</label>
-                        <input type="number" step="0.01" name="total_biaya_pengembalian" class="form-control" required>
+                        <label for="keterangan">Keterangan:</label>
+                        <input type="text" name="keterangan" class="form-control" required>
                     </div>
                     <button type="submit" name="submit" class="btn btn-primary">Simpan</button>
                     <button type="button" class="btn btn-secondary" onclick="closeModal()">Batal</button>
@@ -323,14 +310,11 @@ $supplier_result = $config->query($supplier_query);
                 <tr>
                     <th>ID Pengembalian</th>
                     <th>ID Restock</th>
-                    <th>ID Barang</th>
                     <th>ID Supplier</th>
+                    <th>Nama Barang</th>
                     <th>Tanggal Pengembalian</th>
                     <th>Jumlah</th>
-                    <th>Kondisi Barang</th>
-                    <th>Alasan Pengembalian</th>
-                    <th>Status</th>
-                    <th>Total Biaya</th>
+                    <th>keterangan</th> 
                     <th>Aksi</th>
                 </tr>
             </thead>
@@ -338,19 +322,16 @@ $supplier_result = $config->query($supplier_query);
                 <?php if ($pengembalian_result->num_rows > 0): ?>
                     <?php while ($row = $pengembalian_result->fetch_assoc()): ?>
                         <tr>
-                            <td><?= htmlspecialchars($row['id']); ?></td>
+                        <td><?= htmlspecialchars($row['id_pengembalian']); ?></td>
                             <td><?= htmlspecialchars($row['id_restock']); ?></td>
-                            <td><?= htmlspecialchars($row['id_barang']); ?></td>
                             <td><?= htmlspecialchars($row['id_supplier']); ?></td>
+                            <td><?= htmlspecialchars($row['nama_barang']); ?></td>
                             <td><?= htmlspecialchars($row['tanggal_pengembalian']); ?></td>
                             <td><?= htmlspecialchars($row['jumlah']); ?></td>
-                            <td><?= htmlspecialchars($row['kondisi_barang']); ?></td>
-                            <td><?= htmlspecialchars($row['alasan_pengembalian']); ?></td>
-                            <td><?= htmlspecialchars($row['status_pengembalian']); ?></td>
-                            <td><?= number_format($row['total_biaya_pengembalian'], 2); ?></td>
+                            <td><?= htmlspecialchars($row['keterangan']); ?></td>
                             <td>
                                 <form method="POST" action="pengembalian.php" class="d-inline">
-                                    <input type="hidden" name="id_pengembalian" value="<?= $row['id']; ?>">
+                                    <input type="hidden" name="id_pengembalian" value="<?= $row['id_pengembalian']; ?>">
                                     <button type="submit" name="update" class="btn btn-warning btn-sm">Update</button>
                                     <button type="submit" name="delete" class="btn btn-danger btn-sm" onclick="return confirm('Apakah Anda yakin ingin menghapus pengembalian ini?')">Delete</button>
                                 </form>
