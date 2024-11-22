@@ -69,7 +69,7 @@ if (isset($_GET['ajax'])) {
             border-radius: 4px;
         }
 
-        .show-button {
+        .show-button, .export-button {
             background-color: #28a745;
             color: white;
             border: none;
@@ -148,6 +148,7 @@ if (isset($_GET['ajax'])) {
                 </div>
                 <button class="show-button" onclick="filterData()">Tampilkan</button>
                 <button class="print-button" onclick="printReport()">Cetak Laporan</button>
+                <button class="export-button" onclick="exportExcel()">Export ke Excel</button>
             </div>
 
             <div class="table-controls">
@@ -190,7 +191,7 @@ if (isset($_GET['ajax'])) {
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="6" style="text-align: center;">No data available in table</td>
+                            <td colspan="6" style="text-align: center;">Tidak ada data dalam periode ini</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>
@@ -235,7 +236,7 @@ if (isset($_GET['ajax'])) {
                     tbody.appendChild(row);
                 });
             } else {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No data available in table</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Tidak ada data dalam periode ini</td></tr>';
             }
         }
 
@@ -255,6 +256,12 @@ if (isset($_GET['ajax'])) {
             window.open(`cetak_laporan.php?start_date=${startDate}&end_date=${endDate}`, '_blank');
         }
 
+        function exportExcel() {
+            const startDate = document.querySelector('input[name="start_date"]').value;
+            const endDate = document.querySelector('input[name="end_date"]').value;
+            window.location.href = `export_excel.php?start_date=${startDate}&end_date=${endDate}`;
+        }
+
         function searchTable(query) {
             const rows = document.querySelectorAll('#reportTable tbody tr');
             rows.forEach(row => {
@@ -264,12 +271,8 @@ if (isset($_GET['ajax'])) {
         }
 
         function changeEntries(value) {
-            // Implement pagination logic here
             console.log('Showing', value, 'entries per page');
         }
     </script>
 </body>
 </html>
-
-<?php
-// cetak_laporan.php

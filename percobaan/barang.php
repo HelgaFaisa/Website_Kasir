@@ -17,7 +17,7 @@ $generator = new BarcodeGeneratorHTML();
 
 // Inisialisasi variabel untuk form input
 $kodebarang = $nama_barang = $id_kategori = $harga_beli = $harga_jual = $stok = '';
-$btn_text = 'Tambah Barang'; // Tombol default untuk tambah barang
+$btn_text = 'Update Barang'; // Tombol default untuk tambah barang
 $id_barang_update = null; // Variabel untuk ID barang yang sedang diupdate
 
 // Menangani form input
@@ -65,8 +65,14 @@ $kategori_query = "SELECT * FROM kategori";
 $kategori_result = $config->query($kategori_query);
 
 // Fungsi pencarian
-$search = '';
 $search = $_GET['search'] ?? '';
+
+// Jika pencarian kosong, arahkan ulang ke halaman tanpa parameter
+if (isset($_GET['search']) && $search === '') {
+    header("Location: " . strtok($_SERVER["REQUEST_URI"], '?'));
+    exit;
+}
+
 if (!empty($search)) {
     $barang_query_all = $config->prepare("SELECT barang.*, kategori.nama_kategori 
                                          FROM barang 
@@ -92,422 +98,282 @@ if (!empty($search)) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Data Barang - Toko Baju</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f6f9;
-        }
+    /* Global Styling */
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f6f9;
+    }
 
-        .main-content {
-            margin-left: 270px;
-            padding: 25px;
-            background-color: #ffffff;
-            min-height: calc(100vh - 50px);
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-        }
+    h1 {
+        color: #2c3e50;
+        font-size: 24px;
+        margin-bottom: 30px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border-bottom: 2px solid #800000;
+        padding-bottom: 10px;
+    }
 
-        h1 {
-            color: #2c3e50;
-            font-size: 24px;
-            margin-bottom: 30px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border-bottom: 2px solid #800000;
-            padding-bottom: 10px;
-        }
+    h1 i {
+        color: #800000;
+    }
 
-        h1 i {
-            color: #800000;
-        }
+    /* Main Content */
+    .main-content {
+        margin-left: 270px;
+        padding: 25px;
+        background-color: #ffffff;
+        min-height: calc(100vh - 50px);
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    }
 
-        .action-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-        }
+    /* Action Bar */
+    .action-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+    }
 
-        .button-group {
-            display: flex;
-            gap: 10px;
-        }
+    .button-group {
+        display: flex;
+        gap: 10px;
+    }
 
-        .btn-add {
-            background-color: #800000;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.3s ease;
-        }
+    /* Buttons */
+    .btn-add, .btn-submit {
+        background-color: #800000;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+    }
 
-        .btn-edit {
-            background-color: #ffc107;
-            color: #000;
-        }
+    .btn-add:hover, .btn-submit:hover {
+        background-color: #990000;
+        transform: translateY(-2px);
+    }
 
-        .btn-delete {
-            background-color: #dc3545;
-            color: white;
-        }
+    /* Form Buttons */
+    .form-buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px; /* Jarak antar tombol */
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+    }
 
-        .btn-add:hover, .btn-edit:hover, .btn-delete:hover {
-            transform: translateY(-2px);
-        }
+    /* Button Update */
+    .btn-submit {
+        padding: 12px 24px;
+        background-color: #800000; /* Maroon */
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
 
-        .search-bar {
-            display: flex;
-            gap: 10px;
-            max-width: 400px;
-        }
+    .btn-submit:hover {
+        background-color: #990000; /* Hover warna lebih terang */
+        transform: translateY(-2px);
+    }
 
-        .search-bar input {
-            flex: 1;
-            padding: 10px 15px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
+    /* Button Cancel */
+    .btn-cancel {
+        padding: 12px 24px;
+        background-color: #800000; /* Maroon */
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
 
-        .search-bar input:focus {
-            border-color: #800000;
-            box-shadow: 0 0 0 2px rgba(128, 0, 0, 0.1);
-            outline: none;
-        }
+    .btn-cancel:hover {
+        background-color: #990000; /* Hover warna lebih terang */
+        transform: translateY(-2px);
+    }
 
-        .search-bar button {
-            background-color: #800000;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
+    /* Search Bar */
+    .search-bar {
+        display: flex;
+        gap: 10px;
+        max-width: 400px;
+    }
 
-        .search-bar button:hover {
-            background-color: #990000;
-        }
+    .search-bar input {
+        flex: 1;
+        padding: 10px 15px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
 
-        .table-responsive {
-            overflow-x: auto;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
+    .search-bar input:focus {
+        border-color: #800000;
+        box-shadow: 0 0 0 2px rgba(128, 0, 0, 0.1);
+        outline: none;
+    }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
+    .search-bar button {
+        background-color: #800000;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
 
-        th {
-            background-color: #800000;
-            color: white;
-            padding: 15px;
-            text-align: left;
-            font-weight: 500;
-        }
+    .search-bar button:hover {
+        background-color: #990000;
+    }
 
-        td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #eee;
-        }
+    /* Tables */
+    .table-responsive {
+        overflow-x: auto;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
 
-        tr:hover {
-            background-color: #f8f9fa;
-        }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
 
-        .action-btns {
-            display: flex;
-            gap: 8px;
-            justify-content: center;
-        }
+    th {
+        background-color: #800000;
+        color: white;
+        padding: 15px;
+        text-align: left;
+        font-weight: 500;
+    }
 
-        .action-btns button {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 13px;
-            transition: all 0.3s ease;
-        }
+    td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #eee;
+    }
 
-        .action-btns button[name="edit"] {
-            background-color: #ffc107;
-            color: #000;
-        }
+    tr:hover {
+        background-color: #f8f9fa;
+    }
 
-        .action-btns button[name="delete"] {
-            background-color: #dc3545;
-            color: white;
-        }
+    .action-btns {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+    }
 
-        .action-btns button:hover {
-            transform: translateY(-2px);
-        }
+    .action-btns button[name="edit"] {
+        background-color: #ffc107;
+        color: #000;
+    }
 
-        /* Modal Styling */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            overflow-y: auto;
-        }
+    .action-btns button[name="delete"] {
+        background-color: #dc3545;
+        color: white;
+    }
 
-        .modal-content {
-            background-color: #fff;
-            margin: 40px auto;
-            padding: 30px;
-            border-radius: 8px;
-            width: 90%;
-            max-width: 500px;
-            position: relative;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
+    .action-btns button:hover {
+        transform: translateY(-2px);
+    }
 
-        .form-buttons {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-        }
+    /* Modal Styling */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        overflow-y: auto;
+    }
 
-        .btn-cancel {
-            padding: 10px 20px;
-            background-color: #e9ecef;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            color: #495057;
-        }
+    .modal-content {
+        background-color: #fff;
+        margin: 40px auto;
+        padding: 30px;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 500px;
+        position: relative;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
 
-        .btn-submit {
-            padding: 10px 20px;
-            background-color: #800000;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            color: white;
-        }
+    .modal h2 {
+        color: #800000;
+        font-size: 24px;
+        margin-bottom: 25px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #800000;
+    }
 
-        .btn-cancel:hover {
-            background-color: #dee2e6;
-        }
+    .close {
+        position: absolute;
+        right: 25px;
+        top: 25px;
+        font-size: 24px;
+        font-weight: bold;
+        color: #666;
+        cursor: pointer;
+        transition: color 0.3s ease;
+    }
 
-        .btn-submit:hover {
-            background-color: #990000;
-        }
+    .close:hover {
+        color: #800000;
+    }
 
-/* Ensure form groups have proper spacing */
-        .form-group {
-            margin-bottom: 20px;
-        }
+    /* Form Groups */
+    .form-group {
+        margin-bottom: 20px;
+    }
 
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #333;
-            font-weight: 700;
-            font-size: 14px;
-        }
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #333;
+        font-weight: 700;
+        font-size: 14px;
+    }
 
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
 
-        .form-group input:focus,
-        .form-group select:focus {
-            border-color: #800000;
-            box-shadow: 0 0 0 2px rgba(128, 0, 0, 0.1);
-            outline: none;
-        }
+    .form-group input:focus,
+    .form-group select:focus {
+        border-color: #800000;
+        box-shadow: 0 0 0 2px rgba(128, 0, 0, 0.1);
+        outline: none;
+    }
+</style>
 
-        .modal h2 {
-            color: #800000;
-            font-size: 24px;
-            margin-bottom: 25px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #800000;
-        }
-
-        .close {
-            position: absolute;
-            right: 25px;
-            top: 25px;
-            font-size: 24px;
-            font-weight: bold;
-            color: #666;
-            cursor: pointer;
-            transition: color 0.3s ease;
-        }
-
-        .close:hover {
-            color: #800000;
-        }
-
-        .form-buttons {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-        }
-
-        .btn-cancel {
-            padding: 12px 24px;
-            background-color: #e9ecef;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            color: #495057;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .btn-submit {
-            padding: 12px 24px;
-            background-color: #800000;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            color: white;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .btn-cancel:hover {
-            background-color: #dee2e6;
-            transform: translateY(-2px);
-        }
-
-        .btn-submit:hover {
-            background-color: #990000;
-            transform: translateY(-2px);
-        }
-
-        /* Input placeholder styling */
-        .form-group input::placeholder {
-            color: #adb5bd;
-        }
-
-        /* Select styling */
-        .form-group select {
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23666' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            padding-right: 35px;
-        }
-        
-
-/* Make sure the modal scrolls properly on smaller screens */
-        @media (max-height: 800px) {
-            .modal-content {
-                margin: 20px auto;
-            }
-        }
-
-        /* Tambahkan di bagian <style> */
-        .barcode-container {
-            background: white;
-            padding: 5px;
-            border-radius: 4px;
-            display: inline-block;
-        }
-
-        .barcode-container svg {
-            max-width: 100px;
-            height: auto;
-        }
-
-        td svg {
-            max-width: 100px;
-            height: 30px;
-        }
-        /* Edit Button Styles */
-.btn-edit {
-  background-color: #ffc107;
-  color: #000;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 13px;
-  transition: all 0.3s ease;
-}
-
-.btn-edit:hover {
-  background-color: #ffcb2f;
-  transform: translateY(-2px);
-}
-
-/* Delete Button Styles */
-.btn-delete {
-  background-color: #800000; /* Maroon */
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 13px;
-  transition: all 0.3s ease;
-}
-
-.btn-delete:hover {
-  background-color: #990000; /* Slightly lighter maroon */
-  transform: translateY(-2px);
-}
-
-/* Add New Item Button Styles */
-.btn-add {
-  background-color: #800000; /* Maroon */
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s ease;
-}
-
-.btn-add:hover {
-  background-color: #990000; /* Slightly lighter maroon */
-  transform: translateY(-2px);
-}
-
-.btn-add i {
-  font-size: 16px;
-}
-        
-    </style>
 </head>
 <body>
 
@@ -524,6 +390,7 @@ if (!empty($search)) {
             
         </div>
 
+        <!-- Form Pencarian -->
         <form class="search-bar" method="get">
             <input type="text" name="search" placeholder="Cari nama barang..." value="<?= htmlspecialchars($search) ?>">
             <button type="submit"><i class="fas fa-search"></i></button>
@@ -569,11 +436,25 @@ if (!empty($search)) {
                                     <td><?= $barang['stok'] ?></td>
                                     <td><?= $barang['tgl_input'] ?></td>
                                     <td>
-                                        <form method="post" style="display: inline-block;">
-                                            <input type="hidden" name="id_barang" value="<?= $barang['id_barang'] ?>">
-                                            <button type="submit" name="delete" class="btn-delete">Hapus</button>
-                                        </form>
-                                        <button class="btn-edit" onclick="openModal('Edit Barang', <?= htmlspecialchars(json_encode($barang)) ?>)">Edit</button>
+                                    <div style="display: flex; gap: 10px; align-items: center;">
+    <!-- Tombol Hapus -->
+    <form method="post" style="margin: 0;">
+        <input type="hidden" name="id_barang" value="<?= $barang['id_barang'] ?>">
+        <button type="submit" name="delete" 
+                style="background: #dc3545; border: none; border-radius: 5px; padding: 10px; cursor: pointer; transition: background 0.3s;">
+            <i class="fa fa-trash" style="color: black; font-size: 20px;"></i>
+        </button>
+    </form>
+
+    <!-- Tombol Edit -->
+    <button onclick="openModal('Edit Barang', <?= htmlspecialchars(json_encode($barang)) ?>)" 
+            style="background: #ffc107; border: none; border-radius: 5px; padding: 10px; cursor: pointer; transition: background 0.3s;">
+        <i class="fa fa-pencil-alt" style="color: black; font-size: 20px;"></i>
+    </button>
+</div>
+
+
+
                                     </td>
                                 </tr>
                             <?php endwhile; ?>
