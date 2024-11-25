@@ -7,16 +7,26 @@ if (!isset($_SESSION['user'])) {
 
 require_once 'config.php';
 
+// Function to generate Kode Supplier (SP001, SP002, ...)
+function generateKodeSupplier($config) {
+    $result = $config->query("SELECT MAX(id_supplier) AS max_id FROM supplier");
+    $row = $result->fetch_assoc();
+    $last_id = $row['max_id'] ?? 0;
+    $new_id = str_pad($last_id + 1, 3, '0', STR_PAD_LEFT);
+    return "SP" . $new_id;
+}
+
 // Fungsi untuk menangani aksi CRUD
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['submit'])) {
         // Menambahkan supplier baru
+        $kode_supplier = generateKodeSupplier($config); // Generate new kode_supplier
         $nama_supplier = $_POST['nama_supplier'];
         $alamat = $_POST['alamat'];
         $telepon = $_POST['telepon'];
 
-        $stmt = $config->prepare("INSERT INTO supplier (nama_supplier, alamat, telepon) VALUES (?, ?, ?)");
-        $stmt->bind_param("sss", $nama_supplier, $alamat, $telepon);
+        $stmt = $config->prepare("INSERT INTO supplier (kode_supplier, nama_supplier, alamat, telepon) VALUES (?, ?, ?, ?)");
+        $stmt->bind_param("ssss", $kode_supplier, $nama_supplier, $alamat, $telepon);
         $stmt->execute();
         $stmt->close();
     } elseif (isset($_POST['update'])) {
@@ -198,39 +208,17 @@ if (isset($_GET['id'])) {
             <button type="submit" name="<?= isset($edit_supplier) ? 'update' : 'submit'; ?>" class="button btn-add"><?= isset($edit_supplier) ? 'Update Data' : 'Tambah Supplier'; ?></button>
         </form>
 
-                <!-- Form pencarian supplier -->
-        <form method="GET" action="supplier.php" class="search-form" id="supplierSearchForm">
+        <!-- Form pencarian supplier -->
+        <form method="GET" action="suppliercoba.php" class="search-form" id="supplierSearchForm">
             <input type="text" name="search" placeholder="Cari Supplier" id="supplierSearchInput" value="<?= htmlspecialchars($_GET['search'] ?? ''); ?>">
             <button type="submit" class="button btn-update">Search</button>
         </form>
 
-        <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const searchForm = document.getElementById('supplierSearchForm');
-            const searchInput = document.getElementById('supplierSearchInput');
-
-            // Monitor input changes
-            searchInput.addEventListener('input', function() {
-                if (this.value.trim() === '') {
-                    // Redirect to supplier.php without search parameter when input is empty
-                    window.location.href = 'supplier.php';
-                }
-            });
-
-            // Handle form submission
-            searchForm.addEventListener('submit', function(e) {
-                if (searchInput.value.trim() === '') {
-                    e.preventDefault(); // Prevent form submission if empty
-                    window.location.href = 'supplier.php';
-                }
-            });
-        });
-        </script>
         <!-- Tabel Data Supplier -->
         <table>
             <tr>
                 <th>No</th>
-                <th>ID Supplier</th>
+                <th>Kode Supplier</th>
                 <th>Nama Supplier</th>
                 <th>Alamat</th>
                 <th>Telepon</th>
@@ -242,7 +230,7 @@ if (isset($_GET['id'])) {
             ?>
             <tr>
                 <td><?= $no++; ?></td>
-                <td><?= $supplier['id_supplier']; ?></td>
+                <td><?= $supplier['kode_supplier']; ?></td>
                 <td><?= $supplier['nama_supplier']; ?></td>
                 <td><?= $supplier['alamat']; ?></td>
                 <td><?= $supplier['telepon']; ?></td>

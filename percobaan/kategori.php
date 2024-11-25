@@ -13,30 +13,57 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Menambahkan kategori baru
         $nama_kategori = $_POST['nama_kategori'];
         $tgl_input = date('Y-m-d H:i:s'); // Tanggal otomatis saat input
-
-        $stmt = $config->prepare("INSERT INTO kategori (nama_kategori, tgl_input) VALUES (?, ?)");
-        $stmt->bind_param("ss", $nama_kategori, $tgl_input);
-        $stmt->execute();
-        $stmt->close();
-    } elseif (isset($_POST['update'])) {
-        // Mengupdate kategori
-        $id_kategori = $_POST['id_kategori'];
-        $nama_kategori = $_POST['nama_kategori'];
-
-        $stmt = $config->prepare("UPDATE kategori SET nama_kategori = ? WHERE id_kategori = ?");
-        $stmt->bind_param("si", $nama_kategori, $id_kategori);
-        $stmt->execute();
-        $stmt->close();
-    } elseif (isset($_POST['delete'])) {
-        // Menghapus kategori
-        $id_kategori = $_POST['id_kategori'];
-
-        $stmt = $config->prepare("DELETE FROM kategori WHERE id_kategori = ?");
-        $stmt->bind_param("i", $id_kategori);
+    
+        // Ambil kode terakhir dari database
+        $query = "SELECT kode_kategori FROM kategori ORDER BY kode_kategori DESC LIMIT 1";
+        $result = $config->query($query);
+        $row = $result->fetch_assoc();
+    
+        if ($row) {
+            // Ekstrak angka dari kode terakhir
+            $last_kode = intval(substr($row['kode_kategori'], 2));
+            $new_kode = 'KT' . str_pad($last_kode + 1, 3, '0', STR_PAD_LEFT);
+        } else {
+            // Jika belum ada data, mulai dari KT001
+            $new_kode = 'KT001';
+        }
+    
+        // Masukkan data baru ke tabel
+        $stmt = $config->prepare("INSERT INTO kategori (kode_kategori, nama_kategori, tgl_input) VALUES (?, ?, ?)");
+        $stmt->bind_param("sss", $new_kode, $nama_kategori, $tgl_input);
         $stmt->execute();
         $stmt->close();
     }
-}
+    
+    } // Update kategori
+    if (isset($_POST['update'])) {
+        if (!empty($_POST['id_kategori']) && !empty($_POST['nama_kategori'])) {
+            $id_kategori = intval($_POST['id_kategori']);
+            $nama_kategori = $_POST['nama_kategori'];
+    
+            $stmt = $config->prepare("UPDATE kategori SET nama_kategori = ? WHERE id_kategori = ?");
+            $stmt->bind_param("si", $nama_kategori, $id_kategori);
+            $stmt->execute();
+            $stmt->close();
+        
+        }
+    }
+    
+    // Delete kategori
+    elseif (isset($_POST['delete'])) {
+        if (!empty($_POST['id_kategori'])) {
+            $id_kategori = intval($_POST['id_kategori']);
+    
+            $stmt = $config->prepare("DELETE FROM kategori WHERE id_kategori = ?");
+            $stmt->bind_param("i", $id_kategori);
+            $stmt->execute();
+                
+            $stmt->close();
+        
+        }
+    }
+    
+    
 
 // Menangani pencarian kategori
 $search_term = "";
@@ -164,12 +191,14 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
         }
     </style>
     <script>
-        function editKategori(id, nama) {
-            document.getElementById('id_kategori').value = id;
-            document.getElementById('nama_kategori').value = nama;
-            document.getElementById('submitBtn').style.display = 'none';
-            document.getElementById('updateBtn').style.display = 'inline';
-        }
+        function editKategori(id, kode, nama) {
+    document.getElementById('id_kategori').value = id;
+    document.getElementById('kode_kategori').value = kode;
+    document.getElementById('nama_kategori').value = nama;
+    document.getElementById('submitBtn').style.display = 'none';
+    document.getElementById('updateBtn').style.display = 'inline';
+}
+
     </script>
 </head>
 <body>
@@ -182,6 +211,7 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
 
         <form method="POST" action="kategori.php" style="display: flex; align-items: center;">
             <input type="hidden" id="id_kategori" name="id_kategori">
+            <input type="hidden" id="kode_kategori" name="kode_kategori" placeholder="Kode Kategori" required>
             <input type="text" id="nama_kategori" name="nama_kategori" placeholder="Masukan kategori barang baru" required>
             <button type="submit" id="submitBtn" name="submit" class="button btn-add">Insert</button>
             <button type="submit" id="updateBtn" name="update" class="button btn-update" style="display:none;">Update</button>
@@ -196,7 +226,7 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
         <table>
             <tr>
                 <th>No</th>
-                <th>ID Kategori</th>
+                <th>kode Kategori</th>
                 <th>Nama Kategori</th>
                 <th>Tanggal Input</th>
                 <th>Aksi</th>
@@ -207,7 +237,7 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
             ?>
             <tr>
                 <td><?= $no++; ?></td>
-                <td><?= $kategori['id_kategori']; ?></td>
+                <td><?= $kategori['kode_kategori']; ?></td>
                 <td><?= $kategori['nama_kategori']; ?></td>
                 <td><?= $kategori['tgl_input']; ?></td>
                 <td>
