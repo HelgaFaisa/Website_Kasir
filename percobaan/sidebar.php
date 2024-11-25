@@ -134,7 +134,7 @@
         <li class="menu-toggle">
             <a href="javascript:void(0)"><i class="fas fa-sync-alt"></i> Restok</a>
             <ul class="submenu">
-                <li><a href="restok.php"><i class="fas fa-file-alt"></i> Restok</a></li>
+                <li><a href="restokcoba.php"><i class="fas fa-file-alt"></i> Restok</a></li>
                 <li><a href="laporan_pembelian.php"><i class="fas fa-file-alt"></i> Laporan Pembelian</a></li>
             </ul>
         </li>
