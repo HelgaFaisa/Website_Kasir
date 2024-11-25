@@ -7,25 +7,42 @@ if (!isset($_SESSION['user'])) {
 
 require_once 'config.php';
 
+function generateKodeRestock($config) {
+    // Query the highest 'id_restock' from the restock table
+    $query = "SELECT MAX(id_restock) AS max_id FROM restock";
+    $result = $config->query($query);
+    $row = $result->fetch_assoc();
+
+    // Generate the next 'kode_restock'
+    $maxId = $row['max_id'] ? $row['max_id'] : 0;
+    $nextId = $maxId + 1;
+    return 'RS' . str_pad($nextId, 3, '0', STR_PAD_LEFT); // Format as RS001, RS002, etc.
+}
+
 // Menangani aksi CRUD untuk restock
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['submit'])) {
-        // Menambahkan data restock baru
+        // Generate kode_restock
+        $kode_restock = generateKodeRestock($config);
+        
+        // Other form data
         $id_supplier = $_POST['id_supplier'];
         $nama_barang = $_POST['nama_barang'];
         $tanggal_restock = $_POST['tanggal_restock'];
         $jumlah = $_POST['jumlah'];
         $harga_beli = $_POST['harga_beli'];
         $harga_total = $_POST['harga_total'];
-
-        $stmt = $config->prepare("INSERT INTO restock 
-            (id_supplier, nama_barang, tanggal_restock, jumlah, harga_beli, harga_total) 
-            VALUES (?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("ississ", $id_supplier, $nama_barang, $tanggal_restock, $jumlah, $harga_beli, $harga_total);
+    
+        // Insert into restock table
+        $stmt = $config->prepare("INSERT INTO restock (kode_restock, id_supplier, nama_barang, tanggal_restock, jumlah, harga_beli, harga_total) 
+                                  VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("sssssss", $kode_restock, $id_supplier, $nama_barang, $tanggal_restock, $jumlah, $harga_beli, $harga_total);
         $stmt->execute();
         $stmt->close();
-    } elseif (isset($_POST['update'])) {
-        // Mengupdate data restock
+    }
+    
+    if (isset($_POST['update'])) {
+        // Get the updated values from the form
         $id_restock = $_POST['id_restock'];
         $nama_barang = $_POST['nama_barang'];
         $id_supplier = $_POST['id_supplier'];
@@ -33,20 +50,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $jumlah = $_POST['jumlah'];
         $harga_beli = $_POST['harga_beli'];
         $harga_total = $_POST['harga_total'];
-
+    
+        // Update the restock data
         $stmt = $config->prepare("UPDATE restock SET nama_barang = ?, id_supplier = ?, tanggal_restock = ?, jumlah = ?, harga_beli = ?, harga_total = ? WHERE id_restock = ?");
         $stmt->bind_param("sissssi", $nama_barang, $id_supplier, $tanggal_restock, $jumlah, $harga_beli, $harga_total, $id_restock);
         $stmt->execute();
         $stmt->close();
-    } elseif (isset($_POST['delete'])) {
-        // Menghapus data restock
+    }
+    
+    if (isset($_POST['delete'])) {
+        // Get the id_restock of the record to delete
         $id_restock_data = $_POST['id_restock_data'];
         
+        // Delete the restock data
         $stmt = $config->prepare("DELETE FROM restock WHERE id_restock = ?");
         $stmt->bind_param("i", $id_restock_data);
         $stmt->execute();
         $stmt->close();
     }
+    
 }
 
 // Query untuk supplier (digunakan di modal)
@@ -116,7 +138,7 @@ if (!empty($search)) {
         <table>
             <thead>
                 <tr>
-                    <th>ID Restock</th>
+                    <th>Kode Restock</th>
                     <th>Nama Barang</th>
                     <th>Supplier</th>
                     <th>Tanggal Restock</th>
@@ -129,7 +151,7 @@ if (!empty($search)) {
             <tbody>
                 <?php while ($row = $restock_result->fetch_assoc()): ?>
                     <tr>
-                        <td><?= $row['id_restock']; ?></td>
+                        <td><?= $row['kode_restock']; ?></td>
                         <td><?= $row['nama_barang']; ?></td>
                         <td><?= $row['nama_supplier']; ?></td>
                         <td><?= $row['tanggal_restock']; ?></td>
