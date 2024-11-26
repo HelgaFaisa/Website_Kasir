@@ -572,7 +572,7 @@ if (!empty($search)) {
 }
 function openModal() {
     // Panggil PHP untuk mendapatkan kode barang baru
-    fetch('barangcoba.php?action=get_kodebarang')
+    fetch('barang.php?action=get_kodebarang')
         .then(response => response.text())
         .then(kodebarang => {
             document.getElementById('kodebarang').value = kodebarang; // Isi otomatis input kodebarang
