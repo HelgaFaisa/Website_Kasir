@@ -19,6 +19,25 @@ $generator = new BarcodeGeneratorHTML();
 $kodebarang = $nama_barang = $id_kategori = $harga_beli = $harga_jual = $stok = '';
 $btn_text = 'Update Barang'; // Tombol default untuk tambah barang
 $id_barang_update = null; // Variabel untuk ID barang yang sedang diupdate
+function generateKodeBarang($config) {
+    $query = "SELECT kodebarang FROM barang ORDER BY id_barang DESC LIMIT 1";
+    $result = $config->query($query);
+
+    if ($result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        $lastKode = $row['kodebarang'];
+        $number = intval(substr($lastKode, 3)) + 1; // Ambil angka, tambah 1
+        return "BGR" . str_pad($number, 3, "0", STR_PAD_LEFT);
+    } else {
+        return "BGR001"; // Kode pertama
+    }
+}
+
+// Generate kode barang untuk diisi otomatis
+if ($_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['action']) && $_GET['action'] == 'get_kodebarang') {
+    echo generateKodeBarang($config);
+    exit;
+}
 
 // Menangani form input
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -476,8 +495,8 @@ if (!empty($search)) {
         <form method="post">
             <input type="hidden" name="id_barang" id="id_barang">
             <div class="form-group">
-                <label for="kodebarang">Kode Barang</label>
-                <input type="text" name="kodebarang" id="kodebarang" required>
+            <label for="kodebarang">Kode Barang</label>
+            <input type="text" name="kodebarang" id="kodebarang" readonly>
             </div>
             <div class="form-group">
                 <label for="nama_barang">Nama Barang</label>
@@ -516,6 +535,7 @@ if (!empty($search)) {
 <div class="action-bar">
     <div class="button-group">
         <button class="btn-add" onclick="openModal('Tambah Barang')">
+        <!-- <button onclick="openModal()">Tambah Barang</button> -->
             <i class="fas fa-plus"></i> Tambah Barang
         </button>
     </div>
@@ -548,11 +568,26 @@ if (!empty($search)) {
         document.getElementById('stok').value = barang.stok;
     }
     modal.style.display = 'block';  // Show modal
+    
+}
+function openModal() {
+    // Panggil PHP untuk mendapatkan kode barang baru
+    fetch('barangcoba.php?action=get_kodebarang')
+        .then(response => response.text())
+        .then(kodebarang => {
+            document.getElementById('kodebarang').value = kodebarang; // Isi otomatis input kodebarang
+        })
+        .catch(error => console.error('Error:', error));
+
+    document.getElementById('modal').style.display = 'block'; // Tampilkan modal
 }
 
 function closeModal() {
-    document.getElementById('modal').style.display = 'none';  // Hide modal
+    document.getElementById('modal').style.display = 'none'; // Sembunyikan modal
+    document.getElementById('kodebarang').value = ''; // Reset kodebarang
 }
+
+
 
 
 </script>
