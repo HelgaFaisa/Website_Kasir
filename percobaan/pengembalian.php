@@ -74,12 +74,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         try {
             // Update pengembalian table
             $stmt = $config->prepare("UPDATE pengembalian SET 
-                id_restock = ?, id_supplier = ?, nama_barang = ?, tanggal_pengembalian = ?, 
-                jumlah = ?, keterangan = ?, total_biaya_pengembalian = ? 
-                WHERE id_pengembalian = ?");
-            $stmt->bind_param("sississ", $id_restock, $id_supplier, $nama_barang, 
-                            $tanggal_pengembalian, $jumlah_baru, $keterangan, 
-                            $total_biaya_pengembalian, $id_pengembalian);
+            id_restock = ?, id_supplier = ?, nama_barang = ?, tanggal_pengembalian = ?, 
+            jumlah = ?, keterangan = ?, total_biaya_pengembalian = ? 
+            WHERE id_pengembalian = ?");
+        $stmt->bind_param("sissssis", $id_restock, $id_supplier, $nama_barang, 
+                          $tanggal_pengembalian, $jumlah_baru, $keterangan, 
+                          $total_biaya_pengembalian, $id_pengembalian);
             $stmt->execute();
 
             // Update stock in restock table

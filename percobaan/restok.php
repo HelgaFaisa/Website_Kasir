@@ -7,39 +7,63 @@ if (!isset($_SESSION['user'])) {
 
 require_once 'config.php';
 
-function generateKodeRestock($config) {
-    // Query the highest 'id_restock' from the restock table
-    $query = "SELECT MAX(id_restock) AS max_id FROM restock";
+function generateIdRestock($config) {
+    // Query untuk mendapatkan id_restock terbesar
+    $query = "SELECT id_restock FROM restock ORDER BY id_restock DESC LIMIT 1";
     $result = $config->query($query);
     $row = $result->fetch_assoc();
 
-    // Generate the next 'kode_restock'
-    $maxId = $row['max_id'] ? $row['max_id'] : 0;
-    $nextId = $maxId + 1;
-    return 'RS' . str_pad($nextId, 3, '0', STR_PAD_LEFT); // Format as RS001, RS002, etc.
+    // Ambil angka dari id_restock terakhir
+    if ($row) {
+        $lastId = intval(substr($row['id_restock'], 2)); // Hilangkan "RS" dan konversi ke integer
+    } else {
+        $lastId = 0; // Jika belum ada data
+    }
+
+    // Tambahkan 1 ke ID terakhir
+    $nextId = $lastId + 1;
+
+    // Format menjadi RSXXXX
+    return 'RS' . str_pad($nextId, 4, '0', STR_PAD_LEFT);
 }
 
-// Menangani aksi CRUD untuk restock
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['submit'])) {
-        // Generate kode_restock
-        $kode_restock = generateKodeRestock($config);
-        
-        // Other form data
+        // Generate id_restock
+        $id_restock = generateIdRestock($config);
+
+        // Data lainnya dari form
         $id_supplier = $_POST['id_supplier'];
         $nama_barang = $_POST['nama_barang'];
         $tanggal_restock = $_POST['tanggal_restock'];
         $jumlah = $_POST['jumlah'];
         $harga_beli = $_POST['harga_beli'];
         $harga_total = $_POST['harga_total'];
-    
-        // Insert into restock table
-        $stmt = $config->prepare("INSERT INTO restock (kode_restock, id_supplier, nama_barang, tanggal_restock, jumlah, harga_beli, harga_total) 
+
+        // Validasi: Pastikan jumlah tidak sama
+        $checkQuery = "SELECT COUNT(*) AS count FROM restock WHERE jumlah = ? AND nama_barang = ?";
+        $stmtCheck = $config->prepare($checkQuery);
+        $stmtCheck->bind_param("is", $jumlah, $nama_barang);
+        $stmtCheck->execute();
+        $resultCheck = $stmtCheck->get_result();
+        $rowCheck = $resultCheck->fetch_assoc();
+
+        if ($rowCheck['count'] > 0) {
+            echo "Jumlah sudah ada dalam data untuk barang yang sama.";
+            exit; // Stop proses jika jumlah sama
+        }
+        $stmtCheck->close();
+
+        // Insert ke tabel restock
+        $stmt = $config->prepare("INSERT INTO restock (id_restock, id_supplier, nama_barang, tanggal_restock, jumlah, harga_beli, harga_total) 
                                   VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("sssssss", $kode_restock, $id_supplier, $nama_barang, $tanggal_restock, $jumlah, $harga_beli, $harga_total);
+        $stmt->bind_param("sssssss", $id_restock, $id_supplier, $nama_barang, $tanggal_restock, $jumlah, $harga_beli, $harga_total);
         $stmt->execute();
         $stmt->close();
     }
+    
+}
+
     
     if (isset($_POST['update'])) {
         // Get the updated values from the form
@@ -61,15 +85,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['delete'])) {
         // Get the id_restock of the record to delete
         $id_restock_data = $_POST['id_restock_data'];
-        
+    
         // Delete the restock data
         $stmt = $config->prepare("DELETE FROM restock WHERE id_restock = ?");
-        $stmt->bind_param("i", $id_restock_data);
+        $stmt->bind_param("s", $id_restock_data); // Menggunakan "s" untuk tipe string
         $stmt->execute();
+    
+        if ($stmt->affected_rows > 0) {
+            echo "Data berhasil dihapus.";
+        } else {
+            echo "Data tidak ditemukan.";
+        }
+    
         $stmt->close();
     }
     
-}
 
 // Query untuk supplier (digunakan di modal)
 $supplier_query = "SELECT * FROM supplier";
@@ -138,7 +168,7 @@ if (!empty($search)) {
         <table>
             <thead>
                 <tr>
-                    <th>Kode Restock</th>
+                    <th>ID Restock</th>
                     <th>Nama Barang</th>
                     <th>Supplier</th>
                     <th>Tanggal Restock</th>
@@ -151,7 +181,7 @@ if (!empty($search)) {
             <tbody>
                 <?php while ($row = $restock_result->fetch_assoc()): ?>
                     <tr>
-                        <td><?= $row['kode_restock']; ?></td>
+                        <td><?= $row['id_restock']; ?></td>
                         <td><?= $row['nama_barang']; ?></td>
                         <td><?= $row['nama_supplier']; ?></td>
                         <td><?= $row['tanggal_restock']; ?></td>
