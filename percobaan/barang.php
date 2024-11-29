@@ -456,21 +456,27 @@ if (!empty($search)) {
                                     <td><?= $barang['tgl_input'] ?></td>
                                     <td>
                                     <div style="display: flex; gap: 10px; align-items: center;">
-    <!-- Tombol Hapus -->
-    <form method="post" style="margin: 0;">
-        <input type="hidden" name="id_barang" value="<?= $barang['id_barang'] ?>">
-        <button type="submit" name="delete" 
-                style="background: #dc3545; border: none; border-radius: 5px; padding: 10px; cursor: pointer; transition: background 0.3s;">
-            <i class="fa fa-trash" style="color: black; font-size: 20px;"></i>
-        </button>
-    </form>
-
-    <!-- Tombol Edit -->
-    <button onclick="openModal('Edit Barang', <?= htmlspecialchars(json_encode($barang)) ?>)" 
+     <!-- Tombol Edit -->
+     <button onclick="openModal('Edit Barang', <?= htmlspecialchars(json_encode($barang)) ?>)" 
             style="background: #ffc107; border: none; border-radius: 5px; padding: 10px; cursor: pointer; transition: background 0.3s;">
-        <i class="fa fa-pencil-alt" style="color: black; font-size: 20px;"></i>
-    </button>
-</div>
+            <i class="fa fa-pencil-alt" style="color: black; font-size: 20px;"></i>
+        </button>
+
+        <!-- Tombol Hapus -->
+        <form method="post" style="margin: 0;">
+            <input type="hidden" name="id_barang" value="<?= $barang['id_barang'] ?>">
+            <button type="submit" name="delete" 
+                style="background: #dc3545; border: none; border-radius: 5px; padding: 10px; cursor: pointer; transition: background 0.3s;">
+                <i class="fa fa-trash" style="color: black; font-size: 20px;"></i>
+            </button>
+        </form>
+
+        <!-- Tombol Cetak Barcode -->
+        <a href="print_barcode.php?id=<?= $barang['id_barang'] ?>" target="_blank"
+           style="background: #007bff; border: none; border-radius: 5px; padding: 10px; text-decoration: none; display: inline-block;">
+            <i class="fa fa-barcode" style="color: black; font-size: 20px;"></i>
+        </a>
+    </div>
 
 
 
