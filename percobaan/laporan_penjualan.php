@@ -1,25 +1,27 @@
 <?php
 // laporan_penjualan.php
 session_start();
+require_once 'config.php';
 
 // Date filtering
 $start_date = isset($_GET['start_date']) ? $_GET['start_date'] : date('Y-m-d', strtotime('-30 days'));
 $end_date = isset($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-d');
 
-// Get transactions from session
-$transactions = [];
-if (isset($_SESSION['keranjang'])) {
-    foreach ($_SESSION['keranjang'] as $transaction) {
-        $transaction_date = isset($transaction['tanggal']) ? $transaction['tanggal'] : date('Y-m-d');
-        if ($transaction_date >= $start_date && $transaction_date <= $end_date) {
-            $transactions[] = $transaction;
-        }
-    }
+// Get penjualan data from database
+$penjualan_data = [];
+$query = "SELECT * FROM penjualan WHERE tanggal_input BETWEEN ? AND ?";
+$stmt = $config->prepare($query);
+$stmt->bind_param("ss", $start_date, $end_date);
+$stmt->execute();
+$result = $stmt->get_result();
+while($row = $result->fetch_assoc()) {
+    $penjualan_data[] = $row;
 }
+$stmt->close();
 
 // Handle AJAX request for filtered data
 if (isset($_GET['ajax'])) {
-    echo json_encode($transactions);
+    echo json_encode($penjualan_data);
     exit;
 }
 ?>
@@ -69,16 +71,7 @@ if (isset($_GET['ajax'])) {
             border-radius: 4px;
         }
 
-        .show-button, .export-button {
-            background-color: #28a745;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .print-button {
+        .show-button, .export-button, .print-button {
             background-color: #007bff;
             color: white;
             border: none;
@@ -111,25 +104,6 @@ if (isset($_GET['ajax'])) {
             align-items: center;
             margin: 20px 0;
         }
-
-        .pagination {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .pagination-button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .pagination-button.active {
-            background-color: #0056b3;
-        }
     </style>
 </head>
 <body>
@@ -147,7 +121,7 @@ if (isset($_GET['ajax'])) {
                     <input type="date" class="date-input" name="end_date" value="<?= $end_date ?>">
                 </div>
                 <button class="show-button" onclick="filterData()">Tampilkan</button>
-                <button class="print-button" onclick="printReport()">Cetak Laporan</button>
+                <button class="print-button" onclick="printPDF()">Cetak Laporan</button>
                 <button class="export-button" onclick="exportExcel()">Export ke Excel</button>
             </div>
 
@@ -170,38 +144,34 @@ if (isset($_GET['ajax'])) {
                 <thead>
                     <tr>
                         <th>No</th>
-                        <th>Tanggal</th>
-                        <th>Nama Barang</th>
-                        <th>Jumlah</th>
+                        <th>Invoice</th>
+                        <th>Tanggal Penjualan</th>
                         <th>Total</th>
-                        <th>Kasir</th>
+                        <th>Bayar</th>
+                        <th>Kembali</th>
+                        <th>Diskon</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php if (!empty($transactions)): ?>
-                        <?php foreach ($transactions as $index => $transaction): ?>
+                    <?php if (!empty($penjualan_data)): ?>
+                        <?php foreach ($penjualan_data as $index => $penjualan): ?>
                             <tr>
                                 <td><?= $index + 1 ?></td>
-                                <td><?= date('Y-m-d', strtotime($transaction['tanggal'] ?? date('Y-m-d'))) ?></td>
-                                <td><?= htmlspecialchars($transaction['nama_barang']) ?></td>
-                                <td><?= htmlspecialchars($transaction['jumlah']) ?></td>
-                                <td>Rp <?= number_format($transaction['total'], 0, ',', '.') ?></td>
-                                <td><?= htmlspecialchars($transaction['kasir']) ?></td>
+                                <td><?= htmlspecialchars($penjualan['invoice']) ?></td>
+                                <td><?= date('Y-m-d', strtotime($penjualan['tanggal_input'])) ?></td>
+                                <td>Rp <?= number_format($penjualan['total'], 0, ',', '.') ?></td>
+                                <td>Rp <?= number_format($penjualan['bayar'], 0, ',', '.') ?></td>
+                                <td>Rp <?= number_format($penjualan['kembali'], 0, ',', '.') ?></td>
+                                <td><?= htmlspecialchars($penjualan['diskon']) ?>%</td>
                             </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="6" style="text-align: center;">Tidak ada data dalam periode ini</td>
+                            <td colspan="7" style="text-align: center;">Tidak ada data dalam periode ini</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>
             </table>
-
-            <div class="pagination">
-                <button class="pagination-button">Previous</button>
-                <button class="pagination-button active">1</button>
-                <button class="pagination-button">Next</button>
-            </div>
         </div>
     </div>
 
@@ -223,20 +193,21 @@ if (isset($_GET['ajax'])) {
             tbody.innerHTML = '';
 
             if (data.length > 0) {
-                data.forEach((transaction, index) => {
+                data.forEach((penjualan, index) => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td>${index + 1}</td>
-                        <td>${transaction.tanggal || new Date().toISOString().split('T')[0]}</td>
-                        <td>${escapeHtml(transaction.nama_barang)}</td>
-                        <td>${escapeHtml(transaction.jumlah)}</td>
-                        <td>Rp ${numberFormat(transaction.total)}</td>
-                        <td>${escapeHtml(transaction.kasir)}</td>
+                        <td>${escapeHtml(penjualan.invoice)}</td>
+                        <td>${penjualan.tanggal_input}</td>
+                        <td>Rp ${numberFormat(penjualan.total)}</td>
+                        <td>Rp ${numberFormat(penjualan.bayar)}</td>
+                        <td>Rp ${numberFormat(penjualan.kembali)}</td>
+                        <td>${penjualan.diskon}%</td>
                     `;
                     tbody.appendChild(row);
                 });
             } else {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Tidak ada data dalam periode ini</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Tidak ada data dalam periode ini</td></tr>';
             }
         }
 
@@ -250,16 +221,16 @@ if (isset($_GET['ajax'])) {
             return new Intl.NumberFormat('id-ID').format(number);
         }
 
-        function printReport() {
+        function printPDF() {
             const startDate = document.querySelector('input[name="start_date"]').value;
             const endDate = document.querySelector('input[name="end_date"]').value;
-            window.open(`cetak_laporan.php?start_date=${startDate}&end_date=${endDate}`, '_blank');
+            window.location.href = `cetakPDF_penjualan.php?start_date=${startDate}&end_date=${endDate}`;
         }
 
         function exportExcel() {
             const startDate = document.querySelector('input[name="start_date"]').value;
             const endDate = document.querySelector('input[name="end_date"]').value;
-            window.location.href = `export_excel.php?start_date=${startDate}&end_date=${endDate}`;
+            window.location.href = `excelPenjualan.php?start_date=${startDate}&end_date=${endDate}&type=penjualan`;
         }
 
         function searchTable(query) {
@@ -272,6 +243,7 @@ if (isset($_GET['ajax'])) {
 
         function changeEntries(value) {
             console.log('Showing', value, 'entries per page');
+            // Implement pagination logic here
         }
     </script>
 </body>
