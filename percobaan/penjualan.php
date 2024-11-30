@@ -1,430 +1,532 @@
 <?php
+require_once 'config.php';
+
 session_start();
-
-if (!isset($_SESSION['keranjang'])) {
-    $_SESSION['keranjang'] = [];
+if (!isset($_SESSION['user'])) {
+    header("location: login.php");
+    exit;
 }
 
-// Sample data barang (in real application, this would come from database)
-$data_barang = [
-    ['kode' => 'BRG001', 'nama' => 'Baju Kemeja', 'harga' => 150000],
-    ['kode' => 'BRG002', 'nama' => 'Celana Jeans', 'harga' => 200000],
-    // Add more items as needed
-];
+// Generate CSRF Token
+if (!isset($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
 
-// Handle search functionality
-$search_results = [];
-if (isset($_POST['search_query'])) {
-    $query = strtolower($_POST['search_query']);
-    foreach ($data_barang as $barang) {
-        if (strpos(strtolower($barang['kode']), $query) !== false || 
-            strpos(strtolower($barang['nama']), $query) !== false) {
-            $search_results[] = $barang;
+// Fetch barang data from database
+$query_barang = $config->prepare("SELECT kodebarang, nama_barang, stok, harga_jual, id_kategori FROM barang WHERE stok > 0");
+$query_barang->execute();
+$result_barang = $query_barang->get_result();
+$available_items = [];
+
+while ($row = $result_barang->fetch_assoc()) {
+    $available_items[] = $row;
+}
+
+// Handle transaction submission
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit'])) {
+    try {
+        $config->autocommit(FALSE); // Disable autocommit for transaction
+
+        // Validate CSRF Token
+        if (!hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+            throw new Exception("CSRF token validation failed");
         }
+
+        // Generate invoice number
+        $invoice = "INV" . date('YmdHis');
+        $tanggal_input = date('Y-m-d H:i:s');
+        $total_transaksi = (float)$_POST['total_semua'];
+        $diskon = (float)$_POST['diskon'];
+        $bayar = (float)$_POST['bayar'];
+        $kembali = (float)$_POST['kembali'];
+
+        // Insert main transaction record
+        $stmt_transaksi = $config->prepare("INSERT INTO penjualan (invoice, tanggal_input, total, bayar, kembali, diskon) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt_transaksi->bind_param("ssdddd", 
+            $invoice, 
+            $tanggal_input,  
+            $total_transaksi, 
+            $bayar, 
+            $kembali, 
+            $diskon
+        );
+
+        
+        if (!$stmt_transaksi->execute()) {
+            throw new Exception("Gagal menyimpan transaksi: " . $stmt_transaksi->error);
+        }
+        
+        // Get the last inserted penjualan ID
+        $id_penjualan = $config->insert_id;
+
+        // Decode cart items from JSON
+        $cart_items = json_decode($_POST['cart_items'], true);
+
+        // Prepare detail transaction insert statement
+        $stmt_detail = $config->prepare("INSERT INTO detail_penjualan (id_penjualan, kodebarang, jumlah, harga, total) VALUES (?, ?, ?, ?, ?)");
+
+        // Process each cart item
+        foreach ($cart_items as $item) {
+            $kodebarang = $item['kode'];
+            $jumlah = (int)$item['jumlah'];
+            $harga = (float)$item['harga'];
+            $total_item = $jumlah * $harga;
+
+            // Insert detail transaction
+            $stmt_detail->bind_param("issdd", 
+                $id_penjualan, 
+                $kodebarang, 
+                $jumlah, 
+                $harga, 
+                $total_item
+            );
+
+            if (!$stmt_detail->execute()) {
+                throw new Exception("Gagal menyimpan detail transaksi: " . $stmt_detail->error);
+            }
+
+            // Update barang stok
+            $stmt_stok = $config->prepare("UPDATE barang SET stok = stok - ? WHERE kodebarang = ?");
+            $stmt_stok->bind_param("is", $jumlah, $kodebarang);
+            
+            if (!$stmt_stok->execute()) {
+                throw new Exception("Gagal update stok: " . $stmt_stok->error);
+            }
+        }
+
+        $config->commit(); // Commit transaction
+
+        echo json_encode([
+            'success' => true,
+            'invoice' => $invoice,
+            'message' => 'Transaksi berhasil disimpan'
+        ]);
+        exit;
+
+    } catch (Exception $e) {
+        $config->rollback(); // Rollback transaction if failed
+        echo json_encode([
+            'success' => false, 
+            'message' => $e->getMessage()
+        ]);
+        exit;
     }
-    echo json_encode($search_results);
-    exit;
-}
-
-// Handle reset cart
-if (isset($_POST['reset_cart'])) {
-    $_SESSION['keranjang'] = [];
-    exit;
-}
-
-// Handle add to cart
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['kode_barang'])) {
-    $kode_barang = $_POST['kode_barang'];
-    $nama_barang = $_POST['nama_barang'];
-    $jumlah = $_POST['jumlah'];
-    $harga = $_POST['harga'];
-    $total = $jumlah * $harga;
-
-    $_SESSION['keranjang'][] = [
-        'kode_barang' => $kode_barang,
-        'nama_barang' => $nama_barang,
-        'jumlah' => $jumlah,
-        'harga' => $harga,
-        'total' => $total,
-        'kasir' => $_SESSION['kasir'] ?? 'Admin'
-    ];
-}
-
-if (isset($_GET['hapus'])) {
-    $index = $_GET['hapus'];
-    unset($_SESSION['keranjang'][$index]);
-    $_SESSION['keranjang'] = array_values($_SESSION['keranjang']);
 }
 ?>
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Kasir - Toko Baju</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kasir - Transaksi</title>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f2f5;
+        .main-content {
+            margin-left: 250px; /* sesuaikan dengan lebar sidebar */
+        }
+
+        .container {
+    display: flex;
+    width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+
+            .content {
+                margin-left: 0;
+            }
+        }
+
+
+        .sidebar {
+            width: 250px; /* lebar sidebar */
+        }
+
+        .content {
+            flex-grow: 1; /* memastikan konten utama mengambil sisa ruang */
+        }
+
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --light-bg: #f4f4f4;
+        }
+
+        * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
         }
 
-        .main-content {
-            margin-left: 250px;
-            padding: 20px;
-            margin-bottom: 50px; /* Added space at bottom */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: var(--light-bg);
+            line-height: 1.6;
+            color: #333;
         }
 
-        .page-title {
-            color: #800000;
-            margin-bottom: 20px;
-        }
-
-        .search-section {
-            background-color: #fff;
-            padding: 20px;
+        .container {
+            width: 95%;
+            max-width: 1200px;
+            margin: 20px auto;
+            background-color: white;
             border-radius: 8px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .search-container {
-            display: flex;
-            gap: 20px;
-        }
-
-        .search-box {
-            flex: 1;
-        }
-
-        .search-input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-
-        .search-results {
-            position: absolute;
-            background: white;
-            width: calc(100% - 40px);
-            max-height: 200px;
-            overflow-y: auto;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            display: none;
-            z-index: 1000;
-        }
-
-        .search-result-item {
-            padding: 10px;
-            cursor: pointer;
-        }
-
-        .search-result-item:hover {
-            background-color: #f5f5f5;
-        }
-
-        .hasil-pencarian {
-            flex: 1;
-            background-color: #800000;
-            color: white;
-            padding: 10px;
-            border-radius: 4px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 20px;
         }
 
         .kasir-section {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
         }
 
-        .kasir-header {
-            background-color: #800000;
-            color: white;
+        .search-section {
+            background-color: #f9f9f9;
             padding: 15px;
+            border-radius: 6px;
+        }
+
+        #searchInput {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
             border-radius: 4px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
         }
 
-        .kasir-title {
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        #searchResults {
+            max-height: 400px;
+            overflow-y: auto;
         }
 
-        .reset-button {
-            background-color: #dc3545;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .table-controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 20px 0;
-        }
-
-        table {
+        #searchResults table {
             width: 100%;
             border-collapse: collapse;
         }
 
-        th {
-            background-color: #800000;
-            color: white;
-            padding: 12px;
+        #searchResults th, 
+        #searchResults td {
+            border: 1px solid #ddd;
+            padding: 8px;
             text-align: left;
         }
 
-        td {
-            padding: 12px;
-            border-bottom: 1px solid #ddd;
+        #cart-items {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        #cart-items th, 
+        #cart-items td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+            border: none;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+            border: none;
         }
 
         .payment-section {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
+            display: flex;
+            justify-content: space-between;
             margin-top: 20px;
         }
 
-        .payment-input {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .payment-input input {
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            flex: 1;
-        }
-
-        .bayar-button {
-            background-color: #28a745;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .print-button {
-            background-color: #6c757d;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
+        .payment-section input {
             width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+
+        .kasir-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
         }
     </style>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Search functionality
-            const searchInput = document.querySelector('.search-input');
-            const searchResults = document.querySelector('.search-results');
-            
-            searchInput.addEventListener('input', function() {
-                const query = this.value;
-                if (query.length > 2) {
-                    fetch('', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: 'search_query=' + encodeURIComponent(query)
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        searchResults.innerHTML = '';
-                        data.forEach(item => {
-                            const div = document.createElement('div');
-                            div.className = 'search-result-item';
-                            div.textContent = `${item.kode} - ${item.nama} (Rp ${item.harga})`;
-                            div.onclick = () => addToCart(item);
-                            searchResults.appendChild(div);
-                        });
-                        searchResults.style.display = 'block';
-                    });
-                } else {
-                    searchResults.style.display = 'none';
-                }
-            });
-
-            // Reset cart functionality
-            document.querySelector('.reset-button').addEventListener('click', function() {
-                if (confirm('Apakah anda yakin ingin mereset keranjang?')) {
-                    fetch('', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: 'reset_cart=1'
-                    })
-                    .then(() => location.reload());
-                }
-            });
-
-            // Calculate total and change
-            const totalInput = document.querySelector('[name="total"]');
-            const bayarInput = document.querySelector('[name="bayar"]');
-            const kembaliInput = document.querySelector('[name="kembali"]');
-
-            bayarInput.addEventListener('input', function() {
-                const total = parseInt(totalInput.value) || 0;
-                const bayar = parseInt(this.value) || 0;
-                const kembali = bayar - total;
-                kembaliInput.value = kembali >= 0 ? kembali : 0;
-            });
-
-            // Table search functionality
-            const tableSearchInput = document.querySelector('.table-search');
-            tableSearchInput.addEventListener('input', function() {
-                const searchText = this.value.toLowerCase();
-                const rows = document.querySelectorAll('tbody tr');
-                
-                rows.forEach(row => {
-                    const text = row.textContent.toLowerCase();
-                    row.style.display = text.includes(searchText) ? '' : 'none';
-                });
-            });
-
-            // Calculate initial total
-            calculateTotal();
-        });
-
-        function calculateTotal() {
-            const rows = document.querySelectorAll('tbody tr');
-            let total = 0;
-            rows.forEach(row => {
-                const totalCell = row.querySelector('td:nth-child(4)');
-                if (totalCell) {
-                    total += parseInt(totalCell.textContent.replace(/[^0-9]/g, '')) || 0;
-                }
-            });
-            document.querySelector('[name="total"]').value = total;
-        }
-
-        function addToCart(item) {
-            // Implementation of adding item to cart
-            // This would typically involve a form submission or AJAX call
-            console.log('Adding to cart:', item);
-        }
-    </script>
 </head>
 <body>
-    <?php include('sidebar.php'); ?>
-    
-    <div class="main-content">
-        <h1 class="page-title">Keranjang Penjualan</h1>
-
-        <div class="search-section">
-            <div class="search-container">
-                <div class="search-box">
-                    <h2>Cari Barang</h2>
-                    <input type="text" class="search-input" placeholder="Masukan : Kode / Nama Barang [ENTER]">
-                    <div class="search-results"></div>
-                </div>
-                <div class="hasil-pencarian">
-                    <h2>Hasil Pencarian</h2>
-                    <div id="search-results-content"></div>
-                </div>
-            </div>
-        </div>
-
+<?php include('sidebar.php'); ?>
+    <div class="container">
         <div class="kasir-section">
-            <div class="kasir-header">
-                <div class="kasir-title">
-                    <i class="fas fa-shopping-cart"></i>
-                    <h2>KASIR</h2>
-                </div>
-                <button class="reset-button">RESET KERANJANG</button>
+            <div class="search-section">
+                <h4>Cari Barang</h4>
+                <input type="text" id="searchInput" placeholder="Masukkan kode atau nama barang">
+                <div id="searchResults"></div>
             </div>
 
-            <div>
-                <label>Tanggal</label>
-                <input type="text" class="date-input" value="<?php echo date('d F Y, H:i'); ?>" readonly>
-            </div>
-
-            <div class="table-controls">
-                <div class="entries-section">
-                    Show 
-                    <select>
-                        <option>10</option>
-                        <option>25</option>
-                        <option>50</option>
-                    </select>
-                    entries
+            <div class="cart-section">
+                <div class="kasir-header">
+                    <h4>KASIR</h4>
+                    <button class="btn btn-danger" id="resetCart">Reset Keranjang</button>
                 </div>
-                <div>
-                    Search: <input type="text" class="table-search">
-                </div>
-            </div>
 
-            <table>
-                <thead>
-                    <tr>
-                        <th>No</th>
-                        <th>Nama Barang</th>
-                        <th>Jumlah</th>
-                        <th>Total</th>
-                        <th>Kasir</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (!empty($_SESSION['keranjang'])): ?>
-                        <?php foreach ($_SESSION['keranjang'] as $index => $item): ?>
+                <form id="salesForm" method="POST">
+                    <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+                    <input type="hidden" name="cart_items" id="cartItemsInput">
+                    <input type="hidden" name="submit" value="1">
+
+                    <div class="date-entries">
+                        <label>Tanggal:</label>
+                        <input type="text" id="tanggal" readonly>
+                    </div>
+
+                    <table id="cart-items">
+                        <thead>
                             <tr>
-                                <td><?= $index + 1; ?></td>
-                                <td><?= htmlspecialchars($item['nama_barang']); ?></td>
-                                <td><?= htmlspecialchars($item['jumlah']); ?></td>
-                                <td><?= number_format($item['total'], 0, ',', '.'); ?></td>
-                                <td><?= htmlspecialchars($item['kasir']); ?></td>
-                                <td><a href="?hapus=<?= $index; ?>" class="btn-hapus">Hapus</a></td>
+                                <th>No</th>
+                                <th>Nama Barang</th>
+                                <th>Jumlah</th>
+                                <th>Harga</th>
+                                <th>Total</th>
+                                <th>Aksi</th>
                             </tr>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                            <tr>
-                                <td colspan="6" style="text-align: center;">No data available in table</td>
-                            </tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
 
-            <div class="payment-section">
-                <div class="payment-input">
-                    <label>Total Semua</label>
-                    <input type="text" name="total" readonly>
-                </div>
-                <div class="payment-input">
-                    <label>Bayar</label>
-                    <input type="text" name="bayar">
-                    <button class="bayar-button">Bayar</button>
-                </div>
-                <div class="payment-input">
-                    <label>Kembali</label>
-                    <input type="text" name="kembali" readonly>
-                </div>
-                <button class="print-button">
-                    <i class="fas fa-print"></i> Print Untuk Bukti Pembayaran
-                </button>
+                    <div class="payment-section">
+                        <div>
+                            <label>Total Semua:</label>
+                            <input type="text" id="totalSemua" name="total_semua" readonly>
+                            
+                            <label>Diskon (%):</label>
+                            <input type="number" name="diskon" id="diskon" min="0" max="100" value="0">
+                            
+                            <label>Kembali:</label>
+                            <input type="text" id="kembali" name="kembali" readonly>
+                        </div>
+                        <div>
+                            <label>Bayar:</label>
+                            <input type="number" id="bayar" name="bayar" required>
+                            
+                            <div>
+                                <button type="submit" class="btn btn-success" id="btnBayar">
+                                    <i class="fas fa-money-bill"></i> Bayar
+                                </button>
+                                <button type="button" class="btn btn-success" id="btnPrint">
+                                    <i class="fas fa-print"></i> Print Bukti
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+    $(document).ready(function() {
+        let cart = [];
+        let availableItems = <?php echo json_encode($available_items); ?>;
+
+        // Search functionality
+        $('#searchInput').on('keyup', function() {
+            let searchTerm = $(this).val().toLowerCase();
+            let resultHTML = '<table><thead><tr><th>Kode</th><th>Nama</th><th>Stok</th><th>Harga</th><th>Aksi</th></tr></thead><tbody>';
+            
+            availableItems.forEach(item => {
+                if (item.nama_barang.toLowerCase().includes(searchTerm) || item.kodebarang.toLowerCase().includes(searchTerm)) {
+                    resultHTML += `
+                        <tr>
+                            <td>${item.kodebarang}</td>
+                            <td>${item.nama_barang}</td>
+                            <td>${item.stok}</td>
+                            <td>Rp ${numberFormat(item.harga_jual)}</td>
+                            <td>
+                                <button class="btn btn-success add-to-cart" 
+                                    data-kode="${item.kodebarang}"
+                                    data-nama="${item.nama_barang}"
+                                    data-stok="${item.stok}"
+                                    data-harga="${item.harga_jual}">
+                                    Tambah
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }
+            });
+            
+            resultHTML += '</tbody></table>';
+            $('#searchResults').html(resultHTML);
+        });
+
+        // Add to cart functionality
+        $(document).on('click', '.add-to-cart', function() {
+            let kode = $(this).data('kode');
+            let nama = $(this).data('nama');
+            let harga = $(this).data('harga');
+            let stok = $(this).data('stok');
+
+            let existingItem = cart.find(item => item.kode === kode);
+            if (existingItem) {
+                existingItem.jumlah += 1;
+            } else {
+                cart.push({
+                    kode: kode,
+                    nama: nama,
+                    harga: harga,
+                    jumlah: 1
+                });
+            }
+            updateCartDisplay();
+        });
+
+        // Update cart display
+        function updateCartDisplay() {
+            let cartHTML = '';
+            cart.forEach((item, index) => {
+                let total = item.jumlah * item.harga;
+                cartHTML += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${item.nama}</td>
+                        <td>
+                            <input type="number" value="${item.jumlah}" min="1" 
+                                   onchange="updateQuantity(${index}, this.value)">
+                        </td>
+                        <td>Rp ${numberFormat(item.harga)}</td>
+                        <td>Rp ${numberFormat(total)}</td>
+                        <td>
+                            <button type="button" class="btn btn-danger" onclick="removeItem(${index})">
+                                Hapus
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            $('#cart-items tbody').html(cartHTML);
+            calculateTotal();
+        }
+
+        // Calculate total
+        function calculateTotal() {
+            let subtotal = cart.reduce((sum, item) => sum + (item.jumlah * item.harga), 0);
+            let diskon = parseInt($('#diskon').val()) || 0;
+            let total = subtotal - (subtotal * (diskon / 100));
+            let bayar = parseFloat($('#bayar').val()) || 0;
+            let kembalian = bayar - total;
+
+            $('#totalSemua').val(numberFormat(Math.round(total)));
+            $('#kembali').val(numberFormat(Math.max(0, Math.round(kembalian))));
+        }
+
+        // Update quantity
+        window.updateQuantity = function(index, newQuantity) {
+            if (newQuantity > 0) {
+                cart[index].jumlah = parseInt(newQuantity);
+                updateCartDisplay();
+            }
+        }
+
+        // Remove item
+        window.removeItem = function(index) {
+            cart.splice(index, 1);
+            updateCartDisplay();
+        }
+
+        // Reset cart
+        $('#resetCart').click(function() {
+            cart = [];
+            updateCartDisplay();
+        });
+
+        // Handle payment changes
+        $('#diskon, #bayar').on('input', calculateTotal);
+
+        // Format numbers
+        function numberFormat(number) {
+            return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+
+        // Handle form submission
+        $('#salesForm').submit(function(e) {
+            e.preventDefault();
+            
+            if (cart.length === 0) {
+                alert('Keranjang masih kosong!');
+                return false;
+            }
+
+            let total = parseFloat($('#totalSemua').val().replace(/\./g, '')) || 0;
+            let bayar = parseFloat($('#bayar').val()) || 0;
+
+            if (bayar < total) {
+                alert('Pembayaran kurang!');
+                return false;
+            }
+
+            // Set hidden input with cart items
+            $('#cartItemsInput').val(JSON.stringify(cart));
+
+            // AJAX submission
+            $.ajax({
+                url: '',
+                method: 'POST',
+                data: $(this).serialize(),
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        alert('Transaksi berhasil! No Invoice: ' + response.invoice);
+                        cart = [];
+                        updateCartDisplay();
+                        $('#bayar').val('');
+                        $('#totalSemua').val('');
+                        $('#kembali').val('');
+                    } else {
+                        alert('Gagal: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Terjadi kesalahan dalam transaksi');
+                }
+            });
+        });
+
+        // Update date and time
+        function updateDateTime() {
+            let currentDateTime = new Date();
+            let formattedDate = currentDateTime.toLocaleString('id-ID', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            $('#tanggal').val(formattedDate);
+        }
+
+        // Call function initially and then every second
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+    });
+    </script>
 </body>
 </html>
