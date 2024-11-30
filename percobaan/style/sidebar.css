@@ -1,0 +1,129 @@
+/* Styling untuk Sidebar */
+.sidebar {
+    width: 250px;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color: #800000;
+    color: white;
+    padding-top: 20px;
+    z-index: 9999;
+    transition: transform 0.3s ease;
+}
+
+.sidebar-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.sidebar-header img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+}
+
+.sidebar-header h3 {
+    margin-top: 10px;
+    font-size: 24px;
+    font-weight: bold;
+    color: #fff;
+    font-family: 'Amoresa', sans-serif;
+}
+
+/* Tombol titik tiga untuk meminimalkan sidebar */
+.menu-toggle-button {
+    display: none;
+    font-size: 24px;
+    color: white;
+    background-color: #333;
+    padding: 10px;
+    border: none;
+    cursor: pointer;
+    position: absolute;
+    top: 20px;
+    left: 20px;
+}
+
+/* Styling untuk Menu */
+.sidebar-menu {
+    list-style-type: none;
+    padding: 0;
+}
+
+.sidebar-menu li {
+    padding: 10px;
+    border-bottom: 1px solid #444;
+}
+
+.sidebar-menu li a {
+    color: white;
+    text-decoration: none;
+    display: block;
+    padding: 5px;
+}
+
+.sidebar-menu li a:hover {
+    background-color: #CD3F3E;
+    border-radius: 5px;
+}
+
+.submenu {
+    display: none;
+    list-style-type: none;
+    padding-left: 20px;
+    background-color: #800000;
+    margin-top: 5px;
+}
+
+.submenu li {
+    padding: 8px 10px;
+    border-bottom: 1px solid #555;
+}
+
+.submenu li a {
+    color: #ddd;
+}
+
+.submenu li a:hover {
+    background-color: #CD3F3E;
+}
+
+.menu-toggle.active .submenu {
+    display: block;
+}
+
+/* Sidebar Mini Style */
+.sidebar-mini .sidebar-header img {
+    width: 50px;
+    height: 50px;
+}
+
+.sidebar-mini .sidebar-header h3 {
+    display: none;
+}
+
+/* Styling untuk Kontainer Konten */
+.content-container {
+    margin-left: 260px;
+    padding: 20px;
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-250px);
+        width: 250px;
+    }
+
+    .sidebar.active {
+        transform: translateX(0);
+    }
+
+    .menu-toggle-button {
+        display: block;
+    }
+
+    .content-container {
+        margin-left: 0;
+    }
+}
