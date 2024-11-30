@@ -51,11 +51,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit'])) {
             $diskon
         );
 
-        
         if (!$stmt_transaksi->execute()) {
             throw new Exception("Gagal menyimpan transaksi: " . $stmt_transaksi->error);
         }
-        
+
         // Get the last inserted penjualan ID
         $id_penjualan = $config->insert_id;
 
@@ -71,6 +70,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit'])) {
             $jumlah = (int)$item['jumlah'];
             $harga = (float)$item['harga'];
             $total_item = $jumlah * $harga;
+
+            // Check if there's enough stock
+            $stmt_check_stock = $config->prepare("SELECT stok FROM barang WHERE kodebarang = ?");
+            $stmt_check_stock->bind_param("s", $kodebarang);
+            $stmt_check_stock->execute();
+            $result_stock = $stmt_check_stock->get_result();
+            $stock_data = $result_stock->fetch_assoc();
+
+            if ($stock_data['stok'] < $jumlah) {
+                throw new Exception("Stok barang {$item['nama']} tidak cukup.");
+            }
 
             // Insert detail transaction
             $stmt_detail->bind_param("issdd", 
@@ -88,7 +98,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit'])) {
             // Update barang stok
             $stmt_stok = $config->prepare("UPDATE barang SET stok = stok - ? WHERE kodebarang = ?");
             $stmt_stok->bind_param("is", $jumlah, $kodebarang);
-            
+
             if (!$stmt_stok->execute()) {
                 throw new Exception("Gagal update stok: " . $stmt_stok->error);
             }
@@ -96,11 +106,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit'])) {
 
         $config->commit(); // Commit transaction
 
-        echo json_encode([
-            'success' => true,
-            'invoice' => $invoice,
-            'message' => 'Transaksi berhasil disimpan'
-        ]);
+        $formattedTotal = number_format($total_transaksi, 0, ',', '.');
+$formattedBayar = number_format($bayar, 0, ',', '.');
+$formattedKembali = number_format($kembali, 0, ',', '.');
+
+echo json_encode([
+    'success' => true,
+    'invoice' => $invoice,
+    'total' => $formattedTotal,
+    'bayar' => $formattedBayar,
+    'kembali' => $formattedKembali,
+    'message' => 'Transaksi berhasil disimpan'
+]);
         exit;
 
     } catch (Exception $e) {
@@ -113,6 +130,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit'])) {
     }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -122,156 +140,392 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit'])) {
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <style>
-        .main-content {
-            margin-left: 250px; /* sesuaikan dengan lebar sidebar */
-        }
-
-        .container {
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f9f9f9;
+    color: #333;
+    line-height: 1.6;
+    margin: 0;
+}
+.container {
+    max-width: 100%;
+    margin: 20px auto; /* Pusatkan konten */
+    padding: 20px;
     display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+@media (max-width: 576px) {
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+    }
+    .container {
+        margin-left: 0;
+        padding: 10px;
+    }
+
+    .content-container {
+        margin-left: 180px;
+    }
+}
+
+
+.container {
+    max-width: 1200px; /* Lebar maksimum */
+    margin: 20px auto; /* Pusatkan konten */
+    padding: 20px;
+    display: flex; /* Gunakan flex untuk layout */
+    flex-wrap: wrap;
+    gap: 20px; /* Beri jarak antar elemen */
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+header {
+    background-color: #800000;
+    color: white;
+    text-align: center;
+    padding: 15px;
+    font-size: 20px;
+    font-weight: bold;
+    border-bottom: 2px solid #5a0000;
+}
+
+.kasir-section {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+.sidebar {
+    width: 220px; /* Sesuaikan lebar sidebar */
+    position: fixed; /* Sidebar tetap di tempat */
+    top: 0;
+    left: 0;
+    height: 100%;
+    background-color: #f8f8f8;
+    z-index: 1000;
+    overflow-y: auto;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+}
+
+.sidebar h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar ul li {
+    margin: 15px 0;
+}
+
+.sidebar ul li a {
+    text-decoration: none;
+    color: #333;
+    display: block;
+    padding: 10px;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.sidebar ul li a:hover {
+    background-color: #ddd;
+}
+
+.search-section,
+.cart-section {
+    flex: 1;
+    background: #f4f4f4;
+    border-radius: 6px;
+    padding: 15px;
+}
+
+.search-section h4,
+.cart-section h4 {
+    margin-bottom: 15px;
+    color: #800000; /* Maroon */
+    font-weight: bold;
+}
+
+#searchInput {
     width: 100%;
-        }
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    font-size: 16px;
+}
 
-        @media (max-width: 768px) {
-            .sidebar {
-                display: none;
-            }
+#searchResults table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
 
-            .content {
-                margin-left: 0;
-            }
-        }
+#searchResults th,
+#searchResults td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: center;
+}
 
+#cart-items {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    border: 2px solid #800000;
+}
 
-        .sidebar {
-            width: 250px; /* lebar sidebar */
-        }
+#cart-items th,
+#cart-items td {
+    padding: 10px;
+    border: 1px solid #800000;
+    text-align: center;
+}
+.payment-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 20px;
+}
 
-        .content {
-            flex-grow: 1; /* memastikan konten utama mengambil sisa ruang */
-        }
+.payment-section input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
 
-        :root {
-            --primary-color: #007bff;
-            --secondary-color: #6c757d;
-            --success-color: #28a745;
-            --danger-color: #dc3545;
-            --light-bg: #f4f4f4;
-        }
+.btn {
+    display: inline-block;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+}
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+.btn-success {
+    background-color: #28a745;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 10px;
+}
 
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: var(--light-bg);
-            line-height: 1.6;
-            color: #333;
-        }
+.btn-success:hover {
+    background-color: #218838;
+}
 
-        .container {
-            width: 95%;
-            max-width: 1200px;
-            margin: 20px auto;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            padding: 20px;
-        }
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
 
-        .kasir-section {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
+.btn-primary {
+    background-color: #800000; /* Maroon */
+    color: white;
+}
 
-        .search-section {
-            background-color: #f9f9f9;
-            padding: 15px;
-            border-radius: 6px;
-        }
+#resetCart {
+    background-color: #800000; /* Maroon */
+    color: white;
+}
+/* Table style for cart items */
+#cart-items {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    border: 2px solid #800000; /* Maroon border for the table */
+}
 
-        #searchInput {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
+#cart-items th, #cart-items td {
+    padding: 10px;
+    border: 1px solid #800000; /* Maroon border for table cells */
+    text-align: center;
+}
 
-        #searchResults {
-            max-height: 400px;
-            overflow-y: auto;
-        }
+/* Table header (th) background color and text color */
+#cart-items th {
+    background-color: #800000; /* Maroon background for headers */
+    color: white; /* White text color for contrast */
+}
 
-        #searchResults table {
-            width: 100%;
-            border-collapse: collapse;
-        }
+/* Table rows */
+#cart-items tr:nth-child(even) {
+    background-color: #f2f2f2; /* Alternate row background for readability */
+}
 
-        #searchResults th, 
-        #searchResults td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
+/* Table row hover effect for better interaction */
+#cart-items tr:hover {
+    background-color: #f1f1f1;
+}
 
-        #cart-items {
-            width: 100%;
-            border-collapse: collapse;
-        }
+.container {
+    margin-left: 240px;
+    padding: 20px;
+    background-color: #fff;
+    min-height: 100vh;
+    transition: margin-left 0.3s ease;
+}
 
-        #cart-items th, 
-        #cart-items td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
+.kasir-section {
+    background-color: #fff; /* White background for kasir section */
+    padding: 20px;
+    border-radius: 10px;
+}
 
-        .btn {
-            display: inline-block;
-            padding: 10px 15px;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: opacity 0.3s;
-        }
+.kasir-header h4 {
+    font-size: 24px;
+    color: #800000; /* Maroon color for the header */
+    border-bottom: 2px solid #800000; /* Maroon underline */
+    padding-bottom: 10px;
+}
 
-        .btn-success {
-            background-color: var(--success-color);
-            color: white;
-            border: none;
-        }
+.search-section {
+    margin-bottom: 20px;
+    padding: 15px;
+    border-radius: 5px;
+}
 
-        .btn-danger {
-            background-color: var(--danger-color);
-            color: white;
-            border: none;
-        }
+.search-section h4 {
+    font-size: 20px;
+    color: #800000; /* Maroon color for the search title */
+}
 
-        .payment-section {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
-        }
+.search-section input {
+    padding: 10px;
+    width: 100%;
+    border: none; /* Removed the maroon border for search input */
+    border-radius: 5px;
+    margin-top: 10px;
+}
 
-        .payment-section input {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 10px;
-        }
+#searchResults {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 5px;
+}
 
-        .kasir-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-    </style>
+.btn-danger {
+    background-color: #ff4d4d; /* Red background for reset button */
+    color: white;
+    border: none; /* Removed the maroon border around the reset button */
+    border-radius: 5px;
+}
+
+.btn-danger:hover {
+    background-color: #ff3333; /* Darker red on hover */
+}
+/* Style for the search results table */
+#searchResults table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    border: 2px solid #800000; /* Maroon border for the table */
+}
+
+#searchResults th,
+#searchResults td {
+    padding: 10px;
+    border: 1px solid #800000; /* Maroon border for table cells */
+    text-align: center;
+}
+
+#searchResults th {
+    background-color: #800000; /* Maroon background for header */
+    color: white; /* White text color for header */
+}
+
+#searchResults tr:nth-child(even) {
+    background-color: #f2f2f2; /* Light gray for even rows */
+}
+
+#searchResults tr:hover {
+    background-color: #f1f1f1; /* Light gray on row hover */
+}
+
+/* Styling for the input and search section */
+.search-section {
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 6px;
+    border: 2px solid #800000; /* Maroon border around the search section */
+    margin-bottom: 20px;
+}
+
+.search-section h4 {
+    color: #800000; /* Maroon color for heading */
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+#searchInput {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    font-size: 16px;
+}
+
+.add-to-cart {
+    background-color: #800000; /* Maroon color for the button */
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.add-to-cart:hover {
+    background-color: #5a0000; /* Darker maroon for hover effect */
+}
+.content-container {
+    margin-left: 270px; /* Beri margin sesuai lebar sidebar */
+    padding: 20px;
+    background-color: #fff;
+    min-height: 100vh; /* Pastikan konten memenuhi tinggi layar */
+    transition: margin-left 0.3s ease; /* Animasi margin */
+}
+@media (max-width: 768px) {
+    .sidebar {
+        width: 180px;
+    }
+    .container {
+        margin-left: 180px;
+    }
+
+    .kasir-section {
+        /* flex: none;  */
+        width: 100%;
+    }
+    .content-container {
+        margin-left: 0; /* Margin konten disesuaikan */
+    }
+    @media (max-width: 768px) {
+    #cart-items {
+        font-size: 14px;
+    }
+}
+</style>
 </head>
 <body>
-<?php include('sidebar.php'); ?>
+    <?php include('sidebar.php'); ?>
     <div class="container">
         <div class="kasir-section">
             <div class="search-section">
@@ -329,9 +583,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit'])) {
                                 <button type="submit" class="btn btn-success" id="btnBayar">
                                     <i class="fas fa-money-bill"></i> Bayar
                                 </button>
-                                <button type="button" class="btn btn-success" id="btnPrint">
+                                <!-- <button type="button" class="btn btn-success" id="btnPrint">
                                     <i class="fas fa-print"></i> Print Bukti
-                                </button>
+                                </button> -->
                             </div>
                         </div>
                     </div>
@@ -348,34 +602,36 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit'])) {
 
         // Search functionality
         $('#searchInput').on('keyup', function() {
-            let searchTerm = $(this).val().toLowerCase();
-            let resultHTML = '<table><thead><tr><th>Kode</th><th>Nama</th><th>Stok</th><th>Harga</th><th>Aksi</th></tr></thead><tbody>';
-            
-            availableItems.forEach(item => {
-                if (item.nama_barang.toLowerCase().includes(searchTerm) || item.kodebarang.toLowerCase().includes(searchTerm)) {
-                    resultHTML += `
-                        <tr>
-                            <td>${item.kodebarang}</td>
-                            <td>${item.nama_barang}</td>
-                            <td>${item.stok}</td>
-                            <td>Rp ${numberFormat(item.harga_jual)}</td>
-                            <td>
-                                <button class="btn btn-success add-to-cart" 
-                                    data-kode="${item.kodebarang}"
-                                    data-nama="${item.nama_barang}"
-                                    data-stok="${item.stok}"
-                                    data-harga="${item.harga_jual}">
-                                    Tambah
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                }
-            });
-            
-            resultHTML += '</tbody></table>';
-            $('#searchResults').html(resultHTML);
-        });
+    let searchTerm = $(this).val().toLowerCase();
+    console.log("Searching for:", searchTerm);  // Debugging log
+    let resultHTML = '<table><thead><tr><th>Kode</th><th>Nama</th><th>Stok</th><th>Harga</th><th>Aksi</th></tr></thead><tbody>';
+    
+    availableItems.forEach(item => {
+        if (item.nama_barang.toLowerCase().includes(searchTerm) || item.kodebarang.toLowerCase().includes(searchTerm)) {
+            resultHTML += `
+                <tr>
+                    <td>${item.kodebarang}</td>
+                    <td>${item.nama_barang}</td>
+                    <td>${item.stok}</td>
+                    <td>Rp ${numberFormat(item.harga_jual)}</td>
+                    <td>
+                        <button class="btn btn-success add-to-cart" 
+                            data-kode="${item.kodebarang}"
+                            data-nama="${item.nama_barang}"
+                            data-stok="${item.stok}"
+                            data-harga="${item.harga_jual}">
+                            Tambah
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }
+    });
+    
+    resultHTML += '</tbody></table>';
+    $('#searchResults').html(resultHTML);
+});
+
 
         // Add to cart functionality
         $(document).on('click', '.add-to-cart', function() {
@@ -424,19 +680,31 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit'])) {
             $('#cart-items tbody').html(cartHTML);
             calculateTotal();
         }
-
-        // Calculate total
+        
         function calculateTotal() {
-            let subtotal = cart.reduce((sum, item) => sum + (item.jumlah * item.harga), 0);
-            let diskon = parseInt($('#diskon').val()) || 0;
-            let total = subtotal - (subtotal * (diskon / 100));
-            let bayar = parseFloat($('#bayar').val()) || 0;
-            let kembalian = bayar - total;
+            let total = 0;
+            cart.forEach(item => {
+                total += item.jumlah * item.harga;
+            });
 
-            $('#totalSemua').val(numberFormat(Math.round(total)));
-            $('#kembali').val(numberFormat(Math.max(0, Math.round(kembalian))));
+            let diskon = parseFloat(document.getElementById("diskon").value) || 0;
+            let totalAfterDiscount = total - (total * (diskon / 100));
+            let bayar = parseFloat(document.getElementById("bayar").value) || 0;
+            let kembali = bayar - totalAfterDiscount;
+
+            // Ensure values are numeric and not NaN
+            totalAfterDiscount = isNaN(totalAfterDiscount) ? 0 : totalAfterDiscount;
+            kembali = isNaN(kembali) ? 0 : kembali;
+
+            document.getElementById("totalSemua").value = numberFormat(totalAfterDiscount);
+            document.getElementById("kembali").value = numberFormat(kembali >= 0 ? kembali : 0);
+
+            // Return these values for use in print receipt
+            return {
+                total: totalAfterDiscount,
+                kembali: kembali >= 0 ? kembali : 0
+            };
         }
-
         // Update quantity
         window.updateQuantity = function(index, newQuantity) {
             if (newQuantity > 0) {
@@ -464,50 +732,113 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit'])) {
         function numberFormat(number) {
             return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         }
+   // Handle form submission
+   $('#salesForm').submit(function(e) {
+        e.preventDefault();
 
-        // Handle form submission
-        $('#salesForm').submit(function(e) {
-            e.preventDefault();
-            
-            if (cart.length === 0) {
-                alert('Keranjang masih kosong!');
-                return false;
-            }
+        if (cart.length === 0) {
+            alert('Keranjang masih kosong!');
+            return false;
+        }
 
-            let total = parseFloat($('#totalSemua').val().replace(/\./g, '')) || 0;
-            let bayar = parseFloat($('#bayar').val()) || 0;
+        // Get calculated values
+        let calculatedValues = calculateTotal();
+        let total = calculatedValues.total;
+        let bayar = parseFloat($('#bayar').val()) || 0;
 
-            if (bayar < total) {
-                alert('Pembayaran kurang!');
-                return false;
-            }
+        if (bayar < total) {
+            alert('Pembayaran kurang!');
+            return false;
+        }
 
-            // Set hidden input with cart items
-            $('#cartItemsInput').val(JSON.stringify(cart));
+        // Set hidden input with cart items
+        $('#cartItemsInput').val(JSON.stringify(cart));
 
-            // AJAX submission
-            $.ajax({
-                url: '',
-                method: 'POST',
-                data: $(this).serialize(),
-                dataType: 'json',
-                success: function(response) {
-                    if (response.success) {
-                        alert('Transaksi berhasil! No Invoice: ' + response.invoice);
-                        cart = [];
-                        updateCartDisplay();
-                        $('#bayar').val('');
-                        $('#totalSemua').val('');
-                        $('#kembali').val('');
-                    } else {
-                        alert('Gagal: ' + response.message);
-                    }
-                },
-                error: function() {
-                    alert('Terjadi kesalahan dalam transaksi');
+        // AJAX submission
+        $.ajax({
+            url: '',
+            method: 'POST',
+            data: $(this).serialize(),
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    alert('Transaksi berhasil! No Invoice: ' + response.invoice);
+                    
+                    // Pass actual calculated values to print receipt
+                    printReceipt(
+                        response.invoice, 
+                        calculatedValues.total, 
+                        bayar, 
+                        calculatedValues.kembali
+                    );
+
+                    // Reset form and cart
+                    cart = [];
+                    updateCartDisplay();
+                    $('#bayar').val('');
+                    $('#totalSemua').val('');
+                    $('#kembali').val('');
+                } else {
+                    alert('Gagal: ' + response.message);
                 }
-            });
+            },
+            error: function() {
+                alert('Terjadi kesalahan dalam transaksi');
+            }
         });
+    });
+ // Print receipt function
+function printReceipt(invoice, total, bayar, kembali) {
+    // Format data into currency (Rupiah)
+    const formattedTotal = numberFormat(total);
+    const formattedBayar = numberFormat(bayar);
+    const formattedKembali = numberFormat(kembali);
+
+    const storeName = "AdaAllshop";
+    const storeAddress = "Dusun Sumberjo, Yosorati, Sumberbaru, Jember";
+    const storePhone = "082257079817";
+
+    // Prepare the receipt content
+    let receipt = `STRUK PEMBAYARAN\n`;
+    receipt += `Nama Toko: ${storeName}\n`;
+    receipt += `Alamat: ${storeAddress}\n`;
+    receipt += `Telepon: ${storePhone}\n\n`;
+
+    // Adding the items to the receipt (assuming you have the cart available)
+    cart.forEach(item => {
+        const itemTotal = item.jumlah * item.harga;
+        receipt += `${item.nama}    ${item.jumlah} x Rp ${numberFormat(item.harga)} = Rp ${numberFormat(itemTotal)}\n`;
+    });
+
+    // Adding totals, bayar and kembali
+    receipt += `\nTotal Rp.     ${formattedTotal}\n`;
+    receipt += `Bayar Rp.     ${formattedBayar}\n`;
+    receipt += `Kembali Rp.   ${formattedKembali}\n`;
+
+    receipt += `\nBarang yang sudah dibeli tidak dapat ditukar / dikembalikan.\n`;
+    receipt += `====== ${new Date().toISOString().slice(0, 19).replace('T', ' ')} ======\n`;
+
+    // Display or print the receipt
+    console.log(receipt); // This is just a simple log, you might want to open a print window.
+    
+    // Trigger print dialog (this will print the receipt to the printer)
+    let printWindow = window.open('', '', 'height=400,width=600');
+    printWindow.document.write('<pre>' + receipt + '</pre>');
+    printWindow.document.close();
+    printWindow.print();
+}
+
+// Fungsi untuk memformat angka menjadi Rupiah (IDR)
+function numberFormat(value) {
+    return value.toLocaleString('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0
+    });
+}
+// Panggil fungsi untuk mencetak struk
+printReceipt('INV-001', items, bayar);
+    });
 
         // Update date and time
         function updateDateTime() {
@@ -526,7 +857,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit'])) {
         // Call function initially and then every second
         updateDateTime();
         setInterval(updateDateTime, 1000);
-    });
     </script>
 </body>
 </html>
