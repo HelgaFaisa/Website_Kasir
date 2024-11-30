@@ -174,7 +174,6 @@ body {
     }
 }
 
-
 .container {
     max-width: 1200px; /* Lebar maksimum */
     margin: 20px auto; /* Pusatkan konten */
@@ -345,7 +344,6 @@ header {
     background-color: #800000; /* Maroon */
     color: white;
 }
-/* Table style for cart items */
 #cart-items {
     width: 100%;
     border-collapse: collapse;
@@ -452,74 +450,28 @@ header {
 }
 
 #searchResults tr:nth-child(even) {
-    background-color: #f2f2f2; /* Light gray for even rows */
+    background-color: #f9f9f9; /* Lighter background for even rows */
 }
 
 #searchResults tr:hover {
-    background-color: #f1f1f1; /* Light gray on row hover */
+    background-color: #f1f1f1; /* Slightly darker background for hover effect */
 }
 
-/* Styling for the input and search section */
-.search-section {
-    background-color: #fff;
-    padding: 15px;
-    border-radius: 6px;
-    border: 2px solid #800000; /* Maroon border around the search section */
-    margin-bottom: 20px;
-}
-
-.search-section h4 {
-    color: #800000; /* Maroon color for heading */
-    font-weight: bold;
-    margin-bottom: 10px;
-}
-
-#searchInput {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    margin-bottom: 15px;
-    font-size: 16px;
-}
-
-.add-to-cart {
-    background-color: #800000; /* Maroon color for the button */
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-.add-to-cart:hover {
-    background-color: #5a0000; /* Darker maroon for hover effect */
-}
-.content-container {
-    margin-left: 270px; /* Beri margin sesuai lebar sidebar */
-    padding: 20px;
-    background-color: #fff;
-    min-height: 100vh; /* Pastikan konten memenuhi tinggi layar */
-    transition: margin-left 0.3s ease; /* Animasi margin */
-}
 @media (max-width: 768px) {
-    .sidebar {
-        width: 180px;
-    }
     .container {
-        margin-left: 180px;
+        flex-direction: column;
+        padding: 10px;
     }
 
-    .kasir-section {
-        /* flex: none;  */
+    .search-section,
+    .cart-section {
+        flex: 1;
+    }
+
+    .sidebar {
         width: 100%;
-    }
-    .content-container {
-        margin-left: 0; /* Margin konten disesuaikan */
-    }
-    @media (max-width: 768px) {
-    #cart-items {
-        font-size: 14px;
+        position: relative;
+        padding: 15px;
     }
 }
 </style>
