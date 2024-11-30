@@ -78,7 +78,7 @@ if (isset($_GET['id'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Supplier - Toko Baju</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="style/supllier.css" rel="stylesheet" type="text/css">
+    <link href="style/supplier.css" rel="stylesheet" type="text/css">
 </head>
 <body>
     <!-- Sidebar -->
