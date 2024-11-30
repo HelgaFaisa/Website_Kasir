@@ -141,13 +141,6 @@
 
         <li><a href="pengembalian.php"><i class="fas fa-undo"></i> Pengembalian</a></li>
 
-
-        <li class="menu-toggle">
-            <a href="javascript:void(0)"><i class="fas fa-cogs"></i> Pengaturan Toko</a>
-            <ul class="submenu">
-                <li><a href="javascript:void(0)" data-page="log_aktivitas.php"><i class="fas fa-history"></i> Log Aktivitas</a></li>
-            </ul>
-        </li>
     </ul>
 </div>
 
