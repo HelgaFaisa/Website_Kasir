@@ -1,0 +1,271 @@
+
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f6f9;
+    }
+
+    h1 {
+        color: #2c3e50;
+        font-size: 24px;
+        margin-bottom: 30px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border-bottom: 2px solid #800000;
+        padding-bottom: 10px;
+    }
+
+    h1 i {
+        color: #800000;
+    }
+
+    /* Main Content */
+    .main-content {
+        margin-left: 270px;
+        padding: 25px;
+        background-color: #ffffff;
+        min-height: calc(100vh - 50px);
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Action Bar */
+    .action-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+    }
+
+    .button-group {
+        display: flex;
+        gap: 10px;
+    }
+
+    /* Buttons */
+    .btn-add, .btn-submit {
+        background-color: #800000;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-add:hover, .btn-submit:hover {
+        background-color: #990000;
+        transform: translateY(-2px);
+    }
+
+    /* Form Buttons */
+    .form-buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px; /* Jarak antar tombol */
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+    }
+
+    /* Button Update */
+    .btn-submit {
+        padding: 12px 24px;
+        background-color: #800000; /* Maroon */
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .btn-submit:hover {
+        background-color: #990000; /* Hover warna lebih terang */
+        transform: translateY(-2px);
+    }
+
+    /* Button Cancel */
+    .btn-cancel {
+        padding: 12px 24px;
+        background-color: #800000; /* Maroon */
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .btn-cancel:hover {
+        background-color: #990000; /* Hover warna lebih terang */
+        transform: translateY(-2px);
+    }
+
+    /* Search Bar */
+    .search-bar {
+        display: flex;
+        gap: 10px;
+        max-width: 400px;
+    }
+
+    .search-bar input {
+        flex: 1;
+        padding: 10px 15px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
+
+    .search-bar input:focus {
+        border-color: #800000;
+        box-shadow: 0 0 0 2px rgba(128, 0, 0, 0.1);
+        outline: none;
+    }
+
+    .search-bar button {
+        background-color: #800000;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .search-bar button:hover {
+        background-color: #990000;
+    }
+
+    /* Tables */
+    .table-responsive {
+        overflow-x: auto;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th {
+        background-color: #800000;
+        color: white;
+        padding: 15px;
+        text-align: left;
+        font-weight: 500;
+    }
+
+    td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #eee;
+    }
+
+    tr:hover {
+        background-color: #f8f9fa;
+    }
+
+    .action-btns {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+    }
+
+    .action-btns button[name="edit"] {
+        background-color: #ffc107;
+        color: #000;
+    }
+
+    .action-btns button[name="delete"] {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .action-btns button:hover {
+        transform: translateY(-2px);
+    }
+
+    /* Modal Styling */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        overflow-y: auto;
+    }
+
+    .modal-content {
+        background-color: #fff;
+        margin: 40px auto;
+        padding: 30px;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 500px;
+        position: relative;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .modal h2 {
+        color: #800000;
+        font-size: 24px;
+        margin-bottom: 25px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #800000;
+    }
+
+    .close {
+        position: absolute;
+        right: 25px;
+        top: 25px;
+        font-size: 24px;
+        font-weight: bold;
+        color: #666;
+        cursor: pointer;
+        transition: color 0.3s ease;
+    }
+
+    .close:hover {
+        color: #800000;
+    }
+
+    /* Form Groups */
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #333;
+        font-weight: 700;
+        font-size: 14px;
+    }
+
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+        border-color: #800000;
+        box-shadow: 0 0 0 2px rgba(128, 0, 0, 0.1);
+        outline: none;
+    }
