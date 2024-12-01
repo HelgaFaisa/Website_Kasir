@@ -39,6 +39,7 @@
             <a href="javascript:void(0)"><i class="fas fa-exchange-alt"></i> Transaksi</a>
             <ul class="submenu">
                 <li><a href="penjualan.php"><i class="fas fa-shopping-cart"></i> Penjualan</a></li>
+                <li><a href="transaksi1.php"><i class="fas fa-list"></i> Detail Transaksi</a></li>
                 <li><a href="laporan_penjualan.php"><i class="fas fa-file-alt"></i> Laporan Penjualan</a></li>
             </ul>
         </li>

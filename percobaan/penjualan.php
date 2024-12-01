@@ -166,7 +166,7 @@ body {
     .content-container {
         margin-left: 180px;
     }
-}
+
 
 .container {
     max-width: 1200px; /* Lebar maksimum */
