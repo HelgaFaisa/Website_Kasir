@@ -158,12 +158,6 @@ body {
     border-radius: 10px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
-@media (max-width: 576px) {
-    .sidebar {
-        width: 100%;
-        height: auto;
-        position: relative;
-    }
     .container {
         margin-left: 0;
         padding: 10px;
@@ -201,44 +195,6 @@ header {
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-.sidebar {
-    width: 220px; /* Sesuaikan lebar sidebar */
-    position: fixed; /* Sidebar tetap di tempat */
-    top: 0;
-    left: 0;
-    height: 100%;
-    background-color: #f8f8f8;
-    z-index: 1000;
-    overflow-y: auto;
-    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-}
-
-.sidebar h2 {
-    text-align: center;
-    margin-bottom: 20px;
-}
-.sidebar ul {
-    list-style: none;
-    padding: 0;
-}
-
-.sidebar ul li {
-    margin: 15px 0;
-}
-
-.sidebar ul li a {
-    text-decoration: none;
-    color: #333;
-    display: block;
-    padding: 10px;
-    border-radius: 5px;
-    transition: background-color 0.3s;
-}
-
-.sidebar ul li a:hover {
-    background-color: #ddd;
 }
 
 .search-section,
@@ -468,11 +424,6 @@ header {
         flex: 1;
     }
 
-    .sidebar {
-        width: 100%;
-        position: relative;
-        padding: 15px;
-    }
 }
 </style>
 </head>

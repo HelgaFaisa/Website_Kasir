@@ -7,197 +7,183 @@ if (!isset($_SESSION['user'])) {
 
 require_once 'config.php';
 
-// Fungsi untuk mendapatkan jumlah total dari tabel
-function getTotal($table) {
-    global $config;
-    $result = $config->query("SELECT COUNT(*) as total FROM $table");
-    return $result->fetch_assoc()['total'];
+function validateDateRange($start_date, $end_date) {
+    $start = DateTime::createFromFormat('Y-m-d', $start_date);
+    $end = DateTime::createFromFormat('Y-m-d', $end_date);
+    return $start && $end && $start <= $end;
 }
 
-// Fungsi untuk mendapatkan penjualan harian
-function getDailySales() {
-    global $config;
-    $result = $config->query("SELECT SUM(total) as total FROM penjualan WHERE DATE(tanggal_input) = CURDATE()");
-    return $result->fetch_assoc()['total'] ?? 0;
-}
+function getDateRange() {
+    $start_date = $_GET['start_date'] ?? date('Y-m-d', strtotime('-1 month'));
+    $end_date = $_GET['end_date'] ?? date('Y-m-d');
 
-// Fungsi untuk mendapatkan jumlah barang yang telah terjual
-function getTotalSoldItems() {
-    global $config;
-    $result = $config->query("SELECT SUM(jumlah) as total FROM detail_penjualan");
-    return $result->fetch_assoc()['total'] ?? 0;
-}
+    $start_date = date('Y-m-d', strtotime($start_date));
+    $end_date = date('Y-m-d', strtotime($end_date));
 
-// Fungsi untuk mendapatkan data kategori barang
-function getCategoryData() {
-    global $config;
-    $query = "SELECT 
-                kategori.nama_kategori, 
-                SUM(barang.stok) AS total_stok
-            FROM 
-                kategori
-            JOIN 
-                barang ON kategori.id_kategori = barang.id_kategori
-            GROUP BY 
-                kategori.id_kategori, kategori.nama_kategori";
-    $result = $config->query($query);
-
-    $data = ['labels' => [], 'values' => []];
-    while ($row = $result->fetch_assoc()) {
-        $data['labels'][] = $row['nama_kategori'];  // Menyimpan nama kategori
-        $data['values'][] = $row['total_stok'];    // Menyimpan total stok
+    if (!validateDateRange($start_date, $end_date)) {
+        $start_date = date('Y-m-d', strtotime('-1 month'));
+        $end_date = date('Y-m-d');
     }
 
+    return ['start' => $start_date, 'end' => $end_date];
+}
+
+function getTotal($table) {
+    global $config;
+    $query = $config->prepare("SELECT COUNT(*) as total FROM $table");
+    $query->execute();
+    $result = $query->get_result();
+    $row = $result->fetch_assoc();
+    return $row['total'] ?? 0;
+}
+
+function getTotalStockByCategory() {
+    global $config;
+    $query = $config->prepare("SELECT 
+        k.nama_kategori, 
+        SUM(b.stok) as total_stok
+    FROM kategori k
+    LEFT JOIN barang b ON k.id_kategori = b.id_kategori
+    GROUP BY k.id_kategori, k.nama_kategori
+    ORDER BY total_stok DESC");
+    
+    $query->execute();
+    $result = $query->get_result();
+    
+    $data = ['labels' => [], 'values' => []];
+    while ($row = $result->fetch_assoc()) {
+        $data['labels'][] = $row['nama_kategori'];
+        $data['values'][] = $row['total_stok'];
+    }
+    
     return $data;
 }
 
-// Fungsi untuk mendapatkan data barang terlaris
-function getTopSellingItems() {
+function getTotalPenjualan($dateRange) {
     global $config;
+    $query = $config->prepare("SELECT COALESCE(SUM(total), 0) as total_penjualan 
+        FROM penjualan 
+        WHERE DATE(tanggal_input) = CURDATE()");
+    $query->execute();
+    $result = $query->get_result();
+    $row = $result->fetch_assoc();
+    return $row['total_penjualan'];
+}
 
-    // Query untuk mendapatkan barang terlaris berdasarkan jumlah terjual
-    $query = "SELECT 
-                barang.nama_barang, 
-                SUM(detail_penjualan.jumlah) AS total_terjual
-              FROM 
-                detail_penjualan
-              LEFT JOIN 
-                barang ON detail_penjualan.kodebarang = barang.kodebarang  -- Menggunakan kode_barang untuk menghubungkan
-              GROUP BY 
-                barang.nama_barang
-              ORDER BY 
-                total_terjual DESC
-              LIMIT 10";
+function getTotalBarangTerjual($dateRange) {
+    global $config;
+    $query = $config->prepare("SELECT COALESCE(SUM(dp.jumlah), 0) as total_barang_terjual 
+        FROM detail_penjualan dp
+        JOIN penjualan p ON dp.id_penjualan = p.id_penjualan
+        WHERE DATE(p.tanggal_input) BETWEEN ? AND ?");
+    $query->bind_param('ss', $dateRange['start'], $dateRange['end']);
+    $query->execute();
+    $result = $query->get_result();
+    $row = $result->fetch_assoc();
+    return $row['total_barang_terjual'];
+}
 
-    // Eksekusi query
-    $result = $config->query($query);
+function getPenjualanBerdasarkanPeriode($dateRange) {
+    global $config;
+    $query = $config->prepare("SELECT 
+        DATE(tanggal_input) as tanggal, 
+        COALESCE(SUM(total), 0) as total_penjualan
+    FROM penjualan
+    WHERE DATE(tanggal_input) BETWEEN ? AND ?
+    GROUP BY DATE(tanggal_input)
+    ORDER BY tanggal");
+    
+    $query->bind_param('ss', $dateRange['start'], $dateRange['end']);
+    $query->execute();
+    $result = $query->get_result();
+    
+    $data = ['labels' => [], 'values' => []];
+    
+    $begin = new DateTime($dateRange['start']);
+    $end = new DateTime($dateRange['end']);
+    $interval = new DateInterval('P1D');
+    $daterange = new DatePeriod($begin, $interval, $end->modify('+1 day'));
+    
+    $salesData = [];
+    while ($row = $result->fetch_assoc()) {
+        $salesData[$row['tanggal']] = $row['total_penjualan'];
+    }
+    
+    foreach ($daterange as $date) {
+        $formattedDate = $date->format('Y-m-d');
+        $data['labels'][] = $formattedDate;
+        $data['values'][] = $salesData[$formattedDate] ?? 0;
+    }
+    
+    return $data;
+}
 
-    // Menyiapkan array untuk menyimpan hasil
+function getBarangTerlaris($dateRange) {
+    global $config;
+    $query = $config->prepare("SELECT 
+        b.nama_barang, 
+        COALESCE(SUM(dp.jumlah), 0) as total_terjual
+    FROM barang b
+    LEFT JOIN detail_penjualan dp ON b.kodebarang = dp.kodebarang
+    LEFT JOIN penjualan p ON dp.id_penjualan = p.id_penjualan
+    WHERE DATE(p.tanggal_input) BETWEEN ? AND ?
+    GROUP BY b.kodebarang, b.nama_barang
+    ORDER BY total_terjual DESC
+    LIMIT 10");
+    $query->bind_param('ss', $dateRange['start'], $dateRange['end']);
+    $query->execute();
+    $result = $query->get_result();
+    
     $data = ['labels' => [], 'values' => []];
     while ($row = $result->fetch_assoc()) {
         $data['labels'][] = $row['nama_barang'];
         $data['values'][] = $row['total_terjual'];
     }
-
-    // Kembalikan data dalam bentuk array
+    
     return $data;
 }
 
-// Query untuk mendapatkan penjualan berdasarkan periode
-function getSalesByPeriod($periodType, $periodValue) {
-    global $config;
+if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+    header('Content-Type: application/json');
     
-    switch($periodType) {
-        case 'tahun':
-            $query = "SELECT 
-                        YEAR(tanggal_input) AS tahun,
-                        SUM(total) AS total_penjualan
-                      FROM 
-                        penjualan
-                      WHERE 
-                        YEAR(tanggal_input) = $periodValue
-                      GROUP BY 
-                        YEAR(tanggal_input)
-                      ORDER BY 
-                        tahun DESC";
-            break;
-        
-        case 'bulan':
-            $query = "SELECT 
-                        MONTH(tanggal_input) AS bulan,
-                        SUM(total) AS total_penjualan
-                      FROM 
-                        penjualan
-                      WHERE 
-                        YEAR(tanggal_input) = YEAR(CURDATE())  -- Ganti dengan tahun yang diinginkan
-                        AND MONTH(tanggal_input) = $periodValue
-                      GROUP BY 
-                        YEAR(tanggal_input), MONTH(tanggal_input)
-                      ORDER BY 
-                        bulan DESC";
-            break;
-        
-        case 'minggu':
-            $query = "SELECT 
-                        WEEK(tanggal_input, 1) AS minggu,
-                        SUM(total) AS total_penjualan
-                      FROM 
-                        penjualan
-                      WHERE 
-                        YEAR(tanggal_input) = YEAR(CURDATE())  -- Ganti dengan tahun yang diinginkan
-                        AND WEEK(tanggal_input, 1) = $periodValue
-                      GROUP BY 
-                        YEAR(tanggal_input), WEEK(tanggal_input, 1)
-                      ORDER BY 
-                        minggu DESC";
-            break;
-        
-        default:
-            return "Invalid period type";
+    try {
+        $dateRange = getDateRange();
+        $responseData = [
+            'dateRange' => $dateRange,
+            'totalBarang' => getTotal('barang'),
+            'totalSupplier' => getTotal('supplier'),
+            'penjualan' => getTotalPenjualan($dateRange),
+            'barangTerjual' => getTotalBarangTerjual($dateRange),
+            'stockByCategory' => getTotalStockByCategory(),
+            'penjualanBerdasarkanPeriode' => getPenjualanBerdasarkanPeriode($dateRange),
+            'barangTerlaris' => getBarangTerlaris($dateRange)
+        ];
+
+        echo json_encode($responseData);
+        exit;
+    } catch (Exception $e) {
+        error_log($e->getMessage());
+        http_response_code(500);
+        echo json_encode(['error' => 'Terjadi kesalahan saat memuat data.']);
+        exit;
     }
-
-    $result = $config->query($query);
-    
-    // Menyimpan hasil query dalam array
-    $data = ['labels' => [], 'values' => []];
-    while ($row = $result->fetch_assoc()) {
-        $data['labels'][] = $row['tahun'] ?? $row['bulan'] ?? $row['minggu'];
-        $data['values'][] = $row['total_penjualan'];
-    }
-
-    return $data;
 }
-
-
-// Data kategori untuk Pie Chart
-$categoryData = getCategoryData();
-
-// Data barang terlaris untuk Bar Chart
-$topSellingItems = getTopSellingItems();
-
-// Data untuk Bar Chart Penjualan berdasarkan filter
-$filter = $_GET['filter'] ?? 'bulan';
-$data = ['labels' => [], 'values' => []];
-
-switch ($filter) {
-    case 'minggu':
-        $query = "SELECT WEEK(tanggal_input) as minggu, COUNT(*) as jumlah_penjualan
-                  FROM penjualan
-                  WHERE YEAR(tanggal_input) = YEAR(CURDATE())
-                  GROUP BY minggu";
-        break;
-    case 'tahun':
-        $query = "SELECT YEAR(tanggal_input) as tahun, COUNT(*) as jumlah_penjualan
-                  FROM penjualan
-                  GROUP BY tahun";
-        break;
-    default: // 'bulan'
-        $query = "SELECT MONTH(tanggal_input) as bulan, COUNT(*) as jumlah_penjualan
-                  FROM penjualan
-                  WHERE YEAR(tanggal_input) = YEAR(CURDATE())
-                  GROUP BY bulan";
-}
-
-$result = $config->query($query);
-
-while ($row = $result->fetch_assoc()) {
-    $data['labels'][] = $filter === 'bulan' 
-        ? date('F', mktime(0, 0, 0, $row['bulan'], 10)) 
-        : ($filter === 'minggu' ? "Minggu {$row['minggu']}" : $row['tahun']);
-    $data['values'][] = $row['jumlah_penjualan'];
-}
-
-echo json_encode($data);
 ?>
 
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Toko Baju</title>
+    
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="style/dashboard.css" rel="stylesheet" type="text/css">
+    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    
     <style>
         * {
     margin: 0;
@@ -341,15 +327,15 @@ body {
 /* Dashboard Cards */
 .dashboard-cards {
     display: grid;
-    grid-template-columns: repeat(4, 1fr); /* Mengubah menjadi 4 kolom */
-    gap: 15px; /* Menyesuaikan jarak antar kotak */
+    grid-template-columns: repeat(4, 1fr); 
+    gap: 15px; 
     margin-bottom: 40px;
 }
 
 .card {
     background-color: #ffffff;
-    padding: 20px; /* Menyesuaikan padding agar lebih kecil jika diperlukan */
-    border-radius: 10px; /* Menyesuaikan sudut kotak */
+    padding: 20px; 
+    border-radius: 10px; 
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease-in-out;
     cursor: pointer;
@@ -401,10 +387,9 @@ body {
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     margin-top: 30px;
-    height: 400px; /* Tambahkan tinggi tetap */
+    height: 400px;
 }
 
-/* Perbaikan Grafik */
 .row {
     display: flex;
     gap: 20px;
@@ -481,6 +466,61 @@ body {
     }
 }
 
+.dashboard-cards {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .dashboard-cards .card {
+            flex: 1;
+            margin: 0 10px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        .chart-container {
+            height: 350px;
+        }
+        .charts-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .charts-row > div {
+            flex: 1;
+        }
+        .category-stock-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        #categoryStockChart {
+    max-width: 100%;
+    max-height: 300px; /* Batasi tinggi grafik */
+    margin: 0 auto;
+}
+
+
+        .category-stock-legend {
+            display : none;
+
+        }
+
+        .date-range-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .date-range-container label {
+            margin-right: 10px;
+            align-self: center;
+        }
+        #dateRange {
+            width: 250px;
+        }
+
 @media (max-width: 480px) {
     .navbar {
         flex-direction: column;
@@ -499,10 +539,10 @@ body {
         font-size: 2rem;
     }
 }
+
     </style>
 </head>
 <body>
-    <!-- Navbar -->
     <nav class="navbar">
         <div class="navbar-brand">Toko Baju</div>
         <div class="navbar-user">
@@ -511,152 +551,222 @@ body {
         </div>
     </nav>
 
-    <!-- Sidebar -->
     <?php include('sidebar.php'); ?>
 
-    <!-- Main Content -->
     <div class="main-content">
         <h1>Dashboard</h1>
 
-
-        <!-- Dashboard Cards -->
         <div class="dashboard-cards">
-            <div class="card">
+            <div class="card" id="totalBarangCard">
                 <div class="card-title">Total Barang</div>
-                <div class="card-value"><?php echo getTotal('barang'); ?></div>
+                <div class="card-value" id="totalBarangValue">0</div>
             </div>
-            <div class="card">
+            <div class="card" id="totalSupplierCard">
                 <div class="card-title">Total Supplier</div>
-                <div class="card-value"><?php echo getTotal('supplier'); ?></div>
+                <div class="card-value" id="totalSupplierValue">0</div>
             </div>
-            <div class="card">
-                <div class="card-title">Penjualan Hari Ini</div>
-                <div class="card-value">Rp <?php echo number_format(getDailySales(), 0, ',', '.'); ?></div>
+            <div class="card" id="penjualanCard">
+                <div class="card-title">Pendapatan Hari Ini</div>
+                <div class="card-value" id="penjualanValue">Rp 0</div>
             </div>
-            <div class="card">
+            <div class="card" id="barangTerjualCard">
                 <div class="card-title">Barang Terjual</div>
-                <div class="card-value"><?php echo getTotalSoldItems(); ?></div>
+                <div class="card-value" id="barangTerjualValue">0</div>
             </div>
         </div>
 
-        <!-- Filter Waktu -->
-        <div class="filter-container">
-            <label for="timeFilter">Filter Waktu:</label>
-            <select id="timeFilter" onchange="updateCharts()">
-                <option value="bulan">Bulanan</option>
-                <option value="minggu">Mingguan</option>
-                <option value="tahun">Tahunan</option>
-            </select>
+        <div class="date-range-container">
+            <label>Rentang Tanggal:</label>
+            <input type="text" id="dateRange" placeholder="Pilih Rentang Tanggal">
         </div>
 
-        <!-- Graphs Container -->
-        <div class="row">
-            <!-- Full Width Line Chart -->
-            <div class="col-md-12">
+        <div class="chart-row">
+            <div class="chart-col">
                 <div class="chart-container">
-                    <h3>Penjualan Berdasarkan Periode</h3>
+                    <h3>Pendapatan Berdasarkan Periode</h3>
                     <canvas id="periodChart"></canvas>
                 </div>
             </div>
         </div>
 
-        <!-- Pie Chart and Bar Chart Container -->
-        <div class="row">
-            <div class="col-md-6">
+        <div class="charts-row">
+            <div>
                 <div class="chart-container">
-                    <h3>Kategori Barang</h3>
-                    <canvas id="categoryChart" class="pie-chart"></canvas>
+                    <h3>Stok per Kategori</h3>
+                    <div class="category-stock-container">
+                        <canvas id="categoryStockChart"></canvas>
+                        <div id="categoryStockLegend" class="category-stock-legend"></div>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-6">
+            <div>
                 <div class="chart-container">
-                    <h3>Top 10 Barang Terlaris</h3>
-                    <canvas id="topSellingItemsChart" class="bar-chart"></canvas>
+                    <h3>Barang Terlaris</h3>
+                    <canvas id="topSellingItemsChart"></canvas>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Data Penjualan berdasarkan Periode
-        var periodData = <?php echo json_encode($data); ?>;
+    document.addEventListener('DOMContentLoaded', function() {
+        const colors = [
+            '#ff6347', '#f0ad4e', '#5bc0de', 
+            '#5cb85c', '#d9534f', '#007bff',
+            '#6c757d', '#28a745', '#dc3545', '#ffc107'
+        ];
 
-        // Data Kategori Barang (Pie Chart)
-        var categoryData = <?php echo json_encode($categoryData); ?>;
-
-        // Data Barang Terlaris (Bar Chart)
-        var topSellingItems = <?php echo json_encode($topSellingItems); ?>;
-
-        // Variabel global untuk menyimpan instance chart
-let periodChart, categoryChart, topSellingItemsChart;
-
-// Fungsi untuk menghancurkan chart sebelum membuat ulang
-function destroyCharts() {
-    if (periodChart) periodChart.destroy();
-    if (categoryChart) categoryChart.destroy();
-    if (topSellingItemsChart) topSellingItemsChart.destroy();
-}
-
-// Fungsi untuk membuat ulang grafik dengan data baru
-function initializeCharts(periodData, categoryData, topSellingItems) {
-    // Hancurkan chart yang ada sebelumnya
-    destroyCharts();
-
-    // Chart Periode Penjualan (Line Chart)
-    const periodCtx = document.getElementById('periodChart').getContext('2d');
-    periodChart = new Chart(periodCtx, {
-        type: 'line',
-        data: {
-            labels: periodData.labels,
-            datasets: [{
-                label: 'Penjualan',
-                data: periodData.values,
-                borderColor: 'rgb(75, 192, 192)',
-                tension: 0.4,
-                fill: true,
-                backgroundColor: 'rgba(75, 192, 192, 0.2)'
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true
+        const dateRangePicker = flatpickr("#dateRange", {
+            mode: "range",
+            dateFormat: "Y-m-d",
+            defaultDate: [
+                new Date(new Date().setMonth(new Date().getMonth() - 1)), 
+                new Date()
+            ],
+            onChange: function(selectedDates) {
+                if (selectedDates.length === 2) {
+                    const startDate = selectedDates[0].toISOString().split('T')[0];
+                    const endDate = selectedDates[1].toISOString().split('T')[0];
+                    fetchDashboardData(startDate, endDate);
                 }
             }
-        }
-    });
+        });
 
-    // Chart Kategori Barang (Pie Chart)
-    const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-    categoryChart = new Chart(categoryCtx, {
-        type: 'pie',
-        data: {
-            labels: categoryData.labels,
-            datasets: [{
-                data: categoryData.values,
-                backgroundColor: [
-                    '#ff6347', '#f0ad4e', '#5bc0de', 
-                    '#5cb85c', '#d9534f'
-                ]
-            }]
+        let periodChart, categoryStockChart, topSellingItemsChart;
+
+        function destroyCharts() {
+            if (periodChart) periodChart.destroy();
+            if (categoryStockChart) categoryStockChart.destroy();
+            if (topSellingItemsChart) topSellingItemsChart.destroy();
+        }
+
+        function formatNumber(number) {
+            return new Intl.NumberFormat('id-ID').format(number);
+        }
+
+        function fetchDashboardData(startDate, endDate) {
+            const params = new URLSearchParams({ 
+                start_date: startDate, 
+                end_date: endDate 
+            });
+
+            fetch(`index.php?${params.toString()}`, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                updateDashboardCards(data);
+                updateCharts(data);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+        function updateDashboardCards(data) {
+            document.getElementById('totalBarangValue').textContent = data.totalBarang;
+            document.getElementById('totalSupplierValue').textContent = data.totalSupplier;
+            document.getElementById('penjualanValue').textContent = `Rp ${formatNumber(data.penjualan)}`;
+            document.getElementById('barangTerjualValue').textContent = data.barangTerjual;
+        }
+
+        function updateCharts(data) {
+            destroyCharts();
+
+            const periodCtx = document.getElementById('periodChart').getContext('2d');
+            periodChart = new Chart(periodCtx, {
+                type: 'line',
+                data: {
+                    labels: data.penjualanBerdasarkanPeriode.labels,
+                    datasets: [{
+                        label: 'Total Penjualan',
+                        data: data.penjualanBerdasarkanPeriode.values,
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.4,
+                        fill: true,
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)'
+                    
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return 'Rp ' + formatNumber(value);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Category Stock Pie Chart
+const categoryStockCtx = document.getElementById('categoryStockChart').getContext('2d');
+categoryStockChart = new Chart(categoryStockCtx, {
+    type: 'pie',
+    data: {
+        labels: data.stockByCategory.labels,
+        datasets: [{
+            data: data.stockByCategory.values,
+            backgroundColor: colors.slice(0, data.stockByCategory.labels.length)
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { 
+            legend: { 
+                display: true, 
+                position: 'top', // Menampilkan legenda di atas
+            }
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false
+        layout: {
+            padding: 10 // Memberikan padding dalam chart
         }
-    });
+    }
+});
 
-    // Chart Barang Terlaris (Bar Chart)
+// Category Stock Legend tanpa jumlah stok
+const legendContainer = document.getElementById('categoryStockLegend');
+legendContainer.innerHTML = '';
+data.stockByCategory.labels.forEach((label, index) => {
+    const legendItem = document.createElement('div');
+    legendItem.className = 'legend-item';
+    
+    const colorSpan = document.createElement('span');
+    colorSpan.className = 'legend-color';
+    colorSpan.style.backgroundColor = colors[index];
+    
+    const labelSpan = document.createElement('span');
+    labelSpan.textContent = label; // Menampilkan hanya nama kategori tanpa jumlah stok
+    
+    legendItem.appendChild(colorSpan);
+    legendItem.appendChild(labelSpan);
+    legendContainer.appendChild(legendItem);
+});
+
+
+            // Top Selling Items Bar Chart
     const topSellingCtx = document.getElementById('topSellingItemsChart').getContext('2d');
-    topSellingItemsChart = new Chart(topSellingCtx, {
+    const topSellingChart = new Chart(topSellingCtx, {
         type: 'bar',
         data: {
-            labels: topSellingItems.labels,
+            labels: data.barangTerlaris.labels,
             datasets: [{
-                label: 'Barang Terlaris',
-                data: topSellingItems.values,
+                label: 'Jumlah Terjual',
+                data: data.barangTerlaris.values,
                 backgroundColor: '#007bff'
             }]
         },
@@ -664,42 +774,25 @@ function initializeCharts(periodData, categoryData, topSellingItems) {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
-                y: {
-                    beginAtZero: true
+                y: { 
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Jumlah Terjual'
+                    }
                 }
             }
         }
     });
-}
+        }
+        
 
-// Fungsi untuk memperbarui grafik berdasarkan filter
-function updateCharts() {
-    const timeFilter = document.getElementById('timeFilter').value;
-    
-    fetch('get_chart_data.php?filter=' + timeFilter)
-        .then(response => response.json())
-        .then(data => {
-            // Perbarui grafik dengan data baru
-            periodChart.data.labels = data.periodData.labels;
-            periodChart.data.datasets[0].data = data.periodData.values;
-            periodChart.update();
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
-}
-
-// Inisialisasi awal
-document.addEventListener('DOMContentLoaded', () => {
-    initializeCharts(
-        periodData, 
-        categoryData, 
-        topSellingItems
-    );
-
-    // Tambahkan event listener untuk filter
-    document.getElementById('timeFilter').addEventListener('change', updateCharts);
-});
-        </script>
+        // Initial data load
+        fetchDashboardData(
+            new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().split('T')[0], 
+            new Date().toISOString().split('T')[0]
+        );
+    });
+    </script>
 </body>
 </html>
