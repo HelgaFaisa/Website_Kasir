@@ -213,13 +213,14 @@ header {
 }
 
 #searchInput {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    margin-bottom: 15px;
-    font-size: 16px;
+    width: 100%; /* Sesuaikan dengan lebar container */
+    max-width: 950px; /* Tambahkan batas maksimum jika diperlukan */
+    padding: 10px; /* Tambahkan padding untuk estetika */
+    font-size: 16px; /* Sesuaikan ukuran font */
+    border: 1px solid #ccc; /* Tambahkan border */
+    border-radius: 10px; /* Buat sudut lebih halus */
 }
+
 
 #searchResults table {
     width: 100%;
@@ -235,30 +236,26 @@ header {
 }
 
 #cart-items {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-    border: 2px solid #800000;
+    table-layout: fixed; /* Tetapkan lebar kolom */
+    word-wrap: break-word; /* Bungkus teks panjang */
 }
 
-#cart-items th,
-#cart-items td {
+#cart-items th, #cart-items td {
     padding: 10px;
-    border: 1px solid #800000;
     text-align: center;
 }
 .payment-section {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-    margin-top: 20px;
+    grid-template-columns: 1fr 1fr; /* Dua kolom untuk elemen */
+    gap: 15px; /* Beri jarak antar elemen */
+    margin-top: 20px; /* Jarak antara form pembayaran dan tabel */
 }
 
 .payment-section input {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
+    padding: 8px;
+    font-size: 14px;
+    width: 100%; /* Agar input memenuhi kolom */
+    box-sizing: border-box; /* Untuk mencegah padding merusak layout */
 }
 
 .btn {
@@ -309,8 +306,30 @@ header {
 
 #cart-items th, #cart-items td {
     padding: 10px;
-    border: 1px solid #800000; /* Maroon border for table cells */
     text-align: center;
+}
+#cart-items th:nth-child(1),
+#cart-items td:nth-child(1) {
+    width: 5%; /* Lebar kolom "No" */
+}
+
+#cart-items th:nth-child(2),
+#cart-items td:nth-child(2) {
+    width: 35%; /* Lebar kolom "Nama Barang" */
+}
+
+#cart-items th:nth-child(3),
+#cart-items td:nth-child(3),
+#cart-items th:nth-child(4),
+#cart-items td:nth-child(4),
+#cart-items th:nth-child(5),
+#cart-items td:nth-child(5) {
+    width: 15%; /* Lebar kolom lainnya */
+}
+
+#cart-items th:nth-child(6),
+#cart-items td:nth-child(6) {
+    width: 10%; /* Lebar kolom "Aksi" */
 }
 
 /* Table header (th) background color and text color */
@@ -327,6 +346,9 @@ header {
 /* Table row hover effect for better interaction */
 #cart-items tr:hover {
     background-color: #f1f1f1;
+}
+#totalSemua, #bayar, #diskon, #kembalian {
+    margin-bottom: 10px;
 }
 
 .container {
@@ -412,6 +434,12 @@ header {
 #searchResults tr:hover {
     background-color: #f1f1f1; /* Slightly darker background for hover effect */
 }
+.payment-section .btn-success {
+    grid-column: span 2; /* Tombol 'Bayar' meluas ke dua kolom */
+    margin-top: 10px; /* Jarak atas tombol */
+    padding: 10px 15px; /* Ukuran tombol lebih besar */
+    font-size: 16px; /* Teks tombol lebih besar */
+}
 
 @media (max-width: 768px) {
     .container {
@@ -424,6 +452,22 @@ header {
         flex: 1;
     }
 
+    @media (max-width: 768px) {
+    .payment-section {
+        grid-template-columns: 1fr; /* Susunan vertikal pada layar kecil */
+    }
+
+    #cart-items th, #cart-items td {
+        font-size: 12px; /* Kurangi ukuran font */
+    }
+
+    #searchInput {
+        font-size: 14px; /* Kurangi ukuran input pencarian */
+    }
+    .payment-section .btn-success {
+        grid-column: 1; /* Tombol menyesuaikan satu kolom */
+    }
+}
 }
 </style>
 </head>
@@ -626,7 +670,22 @@ header {
         $('#resetCart').click(function() {
             cart = [];
             updateCartDisplay();
+            // Reset nilai input lainnya
+            $('#diskon').val(0); // Reset diskon ke 0
+            $('#bayar').val(''); // Kosongkan input bayar
+            $('#totalSemua').val(''); // Kosongkan total
+            $('#kembali').val(''); // Kosongkan kembalian
         });
+
+        $('#diskon').on('input', function() {
+    let diskon = parseFloat($(this).val()) || 0;
+    if (diskon < 0 || diskon > 100) {
+        alert('Diskon harus antara 0 dan 100!');
+        $(this).val(0); // Kembalikan ke 0 jika nilai tidak valid
+    }
+    calculateTotal(); // Hitung ulang total
+});
+
 
         // Handle payment changes
         $('#diskon, #bayar').on('input', calculateTotal);
