@@ -189,12 +189,20 @@ if (!empty($search)) {
                         <td>Rp <?= number_format($row['harga_beli'], 0, ',', '.'); ?></td>
                         <td>Rp <?= number_format($row['harga_total'], 0, ',', '.'); ?></td>
                         <td>
-                            <form method="POST" style="display:inline;" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?');">
-                                <input type="hidden" name="id_restock_data" value="<?= $row['id_restock']; ?>">
-                                <button type="submit" name="delete" class="btn-delete">Hapus</button>
-                            </form>
-                            <button onclick="openUpdateForm(<?= htmlspecialchars(json_encode($row)) ?>)" class="btn-update">Edit</button>
-                        </td>
+    <div style="display: flex; gap: 10px; justify-content: center;">
+        <button onclick="openUpdateForm(<?= htmlspecialchars(json_encode($row)) ?>)" 
+        style="background: #ffc107; border: none; border-radius: 5px; padding: 10px; cursor: pointer; transition: background 0.3s;">
+            <i class="fa fa-pencil-alt" style="color: black; font-size: 20px;"></i>
+        </button>
+        <form method="POST" style="display:inline;" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?');">
+            <input type="hidden" name="id_restock_data" value="<?= $row['id_restock']; ?>">
+            <button type="submit" name="delete" 
+                style="background: #dc3545; border: none; border-radius: 5px; padding: 10px; cursor: pointer; transition: background 0.3s;">
+                <i class="fa fa-trash" style="color: black; font-size: 20px;"></i>
+            </button>
+        </form>
+    </div>
+</td>
                     </tr>
                 <?php endwhile; ?>
             </tbody>

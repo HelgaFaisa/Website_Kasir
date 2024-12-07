@@ -144,9 +144,15 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
                 <td>
                     <form method="POST" style="display:inline;">
                         <input type="hidden" name="id_kategori" value="<?= $kategori['id_kategori']; ?>">
-                        <button type="submit" name="delete" class="button btn-delete">Delete</button>
+                        <button type="submit" name="delete" 
+                            style="background: #dc3545; border: none; border-radius: 5px; padding: 10px; cursor: pointer; transition: background 0.3s;">
+                            <i class="fa fa-trash" style="color: black; font-size: 20px;"></i>
+                        </button>
                     </form>
-                    <button class="button btn-update" onclick="editKategori('<?= $kategori['id_kategori']; ?>', '<?= $kategori['nama_kategori']; ?>')">Edit</button>
+                    <button class="button btn-update" onclick="editKategori('<?= $kategori['id_kategori']; ?>', '<?= $kategori['nama_kategori']; ?>')"
+                                style="background: #ffc107; border: none; border-radius: 5px; padding: 10px; cursor: pointer; transition: background 0.3s;">
+                        <i class="fa fa-pencil-alt" style="color: black; font-size: 20px;"></i>
+                    </button>
                 </td>
             </tr>
             <?php endwhile; ?>
