@@ -133,14 +133,27 @@ if (isset($_GET['id'])) {
                 <td><?= $supplier['alamat']; ?></td>
                 <td><?= $supplier['telepon']; ?></td>
                 <td>
-                    <a href="supplier.php?id=<?= $supplier['id_supplier']; ?>">
-                        <button class="button btn-update">Update</button>
-                    </a>
-                    <form method="POST" style="display:inline;">
-                        <input type="hidden" name="id_supplier" value="<?= $supplier['id_supplier']; ?>">
-                        <button type="submit" name="delete" class="button btn-delete">Delete</button>
-                    </form>
-                </td>
+    <!-- Tombol Update -->
+    <a href="supplier.php?id=<?= $supplier['id_supplier']; ?>" style="text-decoration: none;">
+        <button 
+        style="background: #dc3545; border: none; border-radius: 5px; padding: 10px; cursor: pointer; transition: background 0.3s;">
+            <i class="fa fa-pencil-alt" style="color: black; font-size: 20px;"></i>
+        </button>
+    </a>
+
+    <!-- Tombol Delete -->
+    <form method="POST" style="display: inline; margin: 0;">
+        <input type="hidden" name="id_supplier" value="<?= $supplier['id_supplier']; ?>">
+        <button 
+            type="submit" 
+            name="delete" 
+            onclick="return confirm('Apakah Anda yakin ingin menghapus data ini?')" 
+            style="background: #ffc107; border: none; border-radius: 5px; padding: 10px; cursor: pointer; transition: background 0.3s;">
+            <i class="fa fa-trash" style="color: black; font-size: 20px;"></i>
+        </button>
+    </form>
+</td>
+
             </tr>
             <?php endwhile; ?>
         </table>
