@@ -7,101 +7,60 @@ if (!isset($_SESSION['user'])) {
 
 require_once 'config.php';
 
+// Fungsi untuk generate ID Restock baru
 function generateIdRestock($config) {
-    // Query untuk mendapatkan id_restock terbesar
     $query = "SELECT id_restock FROM restock ORDER BY id_restock DESC LIMIT 1";
     $result = $config->query($query);
     $row = $result->fetch_assoc();
 
-    // Ambil angka dari id_restock terakhir
-    if ($row) {
-        $lastId = intval(substr($row['id_restock'], 2)); // Hilangkan "RS" dan konversi ke integer
-    } else {
-        $lastId = 0; // Jika belum ada data
-    }
-
-    // Tambahkan 1 ke ID terakhir
+    $lastId = $row ? intval(substr($row['id_restock'], 2)) : 0;
     $nextId = $lastId + 1;
-
-    // Format menjadi RSXXXX
     return 'RS' . str_pad($nextId, 4, '0', STR_PAD_LEFT);
 }
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    if (isset($_POST['submit'])) {
-        // Generate id_restock
-        $id_restock = generateIdRestock($config);
+// Insert data
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
+    $id_restock = generateIdRestock($config);
+    $id_supplier = $_POST['id_supplier'];
+    $nama_barang = $_POST['nama_barang'];
+    $tanggal_restock = $_POST['tanggal_restock'];
+    $jumlah = $_POST['jumlah'];
+    $harga_beli = $_POST['harga_beli'];
+    $harga_total = $jumlah * $harga_beli;
 
-        // Data lainnya dari form
-        $id_supplier = $_POST['id_supplier'];
-        $nama_barang = $_POST['nama_barang'];
-        $tanggal_restock = $_POST['tanggal_restock'];
-        $jumlah = $_POST['jumlah'];
-        $harga_beli = $_POST['harga_beli'];
-        $harga_total = $_POST['harga_total'];
-
-        // Validasi: Pastikan jumlah tidak sama
-        $checkQuery = "SELECT COUNT(*) AS count FROM restock WHERE jumlah = ? AND nama_barang = ?";
-        $stmtCheck = $config->prepare($checkQuery);
-        $stmtCheck->bind_param("is", $jumlah, $nama_barang);
-        $stmtCheck->execute();
-        $resultCheck = $stmtCheck->get_result();
-        $rowCheck = $resultCheck->fetch_assoc();
-
-        if ($rowCheck['count'] > 0) {
-            echo "Jumlah sudah ada dalam data untuk barang yang sama.";
-            exit; // Stop proses jika jumlah sama
-        }
-        $stmtCheck->close();
-
-        // Insert ke tabel restock
-        $stmt = $config->prepare("INSERT INTO restock (id_restock, id_supplier, nama_barang, tanggal_restock, jumlah, harga_beli, harga_total) 
-                                  VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("sssssss", $id_restock, $id_supplier, $nama_barang, $tanggal_restock, $jumlah, $harga_beli, $harga_total);
-        $stmt->execute();
-        $stmt->close();
-    }
-    
+    $stmt = $config->prepare("INSERT INTO restock (id_restock, id_supplier, nama_barang, tanggal_restock, jumlah, harga_beli, harga_total) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("ssssdds", $id_restock, $id_supplier, $nama_barang, $tanggal_restock, $jumlah, $harga_beli, $harga_total);
+    $stmt->execute();
+    $stmt->close();
 }
 
-    
-    if (isset($_POST['update'])) {
-        // Get the updated values from the form
-        $id_restock = $_POST['id_restock'];
-        $nama_barang = $_POST['nama_barang'];
-        $id_supplier = $_POST['id_supplier'];
-        $tanggal_restock = $_POST['tanggal_restock'];
-        $jumlah = $_POST['jumlah'];
-        $harga_beli = $_POST['harga_beli'];
-        $harga_total = $_POST['harga_total'];
-    
-        // Update the restock data
-        $stmt = $config->prepare("UPDATE restock SET nama_barang = ?, id_supplier = ?, tanggal_restock = ?, jumlah = ?, harga_beli = ?, harga_total = ? WHERE id_restock = ?");
-        $stmt->bind_param("sissssi", $nama_barang, $id_supplier, $tanggal_restock, $jumlah, $harga_beli, $harga_total, $id_restock);
-        $stmt->execute();
-        $stmt->close();
-    }
-    
-    if (isset($_POST['delete'])) {
-        // Get the id_restock of the record to delete
-        $id_restock_data = $_POST['id_restock_data'];
-    
-        // Delete the restock data
-        $stmt = $config->prepare("DELETE FROM restock WHERE id_restock = ?");
-        $stmt->bind_param("s", $id_restock_data); // Menggunakan "s" untuk tipe string
-        $stmt->execute();
-    
-        if ($stmt->affected_rows > 0) {
-            echo "Data berhasil dihapus.";
-        } else {
-            echo "Data tidak ditemukan.";
-        }
-    
-        $stmt->close();
-    }
-    
+// Update data berdasarkan id_restock
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update'])) {
+    $id_restock = $_POST['id_restock'];
+    $id_supplier = $_POST['id_supplier'];
+    $nama_barang = $_POST['nama_barang'];
+    $tanggal_restock = $_POST['tanggal_restock'];
+    $jumlah = $_POST['jumlah'];
+    $harga_beli = $_POST['harga_beli'];
+    $harga_total = $jumlah * $harga_beli;
 
-// Query untuk supplier (digunakan di modal)
+    $stmt = $config->prepare("UPDATE restock SET id_supplier = ?, nama_barang = ?, tanggal_restock = ?, jumlah = ?, harga_beli = ?, harga_total = ? WHERE id_restock = ?");
+    $stmt->bind_param("sssddds", $id_supplier, $nama_barang, $tanggal_restock, $jumlah, $harga_beli, $harga_total, $id_restock);
+    $stmt->execute();
+    $stmt->close();
+}
+
+// Delete data berdasarkan id_restock
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete'])) {
+    $id_restock = $_POST['id_restock_data'];
+
+    $stmt = $config->prepare("DELETE FROM restock WHERE id_restock = ?");
+    $stmt->bind_param("s", $id_restock);
+    $stmt->execute();
+    $stmt->close();
+}
+
+// Ambil data supplier
 $supplier_query = "SELECT * FROM supplier";
 $supplier_result = $config->query($supplier_query);
 
