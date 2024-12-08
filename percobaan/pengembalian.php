@@ -7,19 +7,46 @@ if (!isset($_SESSION['user'])) {
 
 require_once 'config.php';
 
-// Handle CRUD actions for returns
+// Function to validate specific stock for restock
+function validateStockForRestock($config, $id_restock, $jumlah_pengembalian) {
+    $stock_check = $config->prepare("SELECT jumlah FROM restock WHERE id_restock = ?");
+    $stock_check->bind_param("s", $id_restock);
+    $stock_check->execute();
+    $stock_result = $stock_check->get_result();
+    $stock_row = $stock_result->fetch_assoc();
+
+    // Check if stock for selected restock is sufficient
+    return $stock_row['jumlah'] >= $jumlah_pengembalian;
+}
+
+// Fetch restock data for dropdown
+$restock_query = "SELECT r.*, s.nama_supplier 
+                  FROM restock r 
+                  JOIN supplier s ON r.id_supplier = s.id_supplier 
+                  WHERE r.jumlah > 0";
+$restock_result = $config->query($restock_query);
+
+// Handle CRUD actions
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // Tambah Data Pengembalian
     if (isset($_POST['submit'])) {
-        // Add new return data
         $id_restock = $_POST['id_restock'];
         $id_supplier = $_POST['id_supplier'];
         $nama_barang = $_POST['nama_barang'];
         $tanggal_pengembalian = $_POST['tanggal_pengembalian'];
         $jumlah = $_POST['jumlah'];
-        $keterangan = $_POST['keterangan'];
+        
+        // Validasi keterangan dengan ketat
+        $keterangan = trim($_POST['keterangan']);
+        if (strlen($keterangan) === 0) {
+            $_SESSION['error'] = "Keterangan harus diisi dengan deskripsi yang valid";
+            header("Location: " . $_SERVER['PHP_SELF']);
+            exit();
+        }
+        
         $total_biaya_pengembalian = $_POST['total_biaya_pengembalian'];
 
-        // Generate ID Pengembalian (PG001 format)
+        // Generate ID Pengembalian
         $query = "SELECT MAX(SUBSTRING(id_pengembalian, 3)) as max_id FROM pengembalian";
         $result = $config->query($query);
         $row = $result->fetch_assoc();
@@ -30,6 +57,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $config->begin_transaction();
 
         try {
+            // Validate stock for restock
+            if (!validateStockForRestock($config, $id_restock, $jumlah)) {
+                throw new Exception("Stok untuk restock {$id_restock} tidak mencukupi untuk pengembalian");
+            }
+
             // Insert into pengembalian table
             $stmt = $config->prepare("INSERT INTO pengembalian 
                 (id_pengembalian, id_restock, id_supplier, nama_barang, tanggal_pengembalian, jumlah, keterangan, total_biaya_pengembalian) 
@@ -38,67 +70,109 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             $tanggal_pengembalian, $jumlah, $keterangan, $total_biaya_pengembalian);
             $stmt->execute();
 
-            // Update stock in restock table
+            // Update stock for specific restock
             $stmt = $config->prepare("UPDATE restock SET jumlah = jumlah - ? WHERE id_restock = ?");
-            $stmt->bind_param("ii", $jumlah, $id_restock);
+            $stmt->bind_param("is", $jumlah, $id_restock);
             $stmt->execute();
 
             $config->commit();
-            $stmt->close();
+            $_SESSION['success'] = "Berhasil menambahkan data pengembalian";
         } catch (Exception $e) {
             $config->rollback();
-            throw $e;
+            $_SESSION['error'] = $e->getMessage();
         }
-    } elseif (isset($_POST['update'])) {
-        // Update return data
+        
+        header("Location: " . $_SERVER['PHP_SELF']);
+        exit();
+    }
+
+    // Update Data Pengembalian 
+    elseif (isset($_POST['update'])) {
+        // Ambil data dari form
         $id_pengembalian = $_POST['id_pengembalian'];
-        $id_restock = $_POST['id_restock'];
+        $id_restock_baru = $_POST['id_restock'];
         $id_supplier = $_POST['id_supplier'];
         $nama_barang = $_POST['nama_barang'];
         $tanggal_pengembalian = $_POST['tanggal_pengembalian'];
         $jumlah_baru = $_POST['jumlah'];
-        $keterangan = $_POST['keterangan'];
+        
+        // Validasi keterangan dengan ketat
+        $keterangan = trim($_POST['keterangan']);
+        if ($keterangan === '') {
+            $_SESSION['error'] = "Keterangan harus diisi dengan deskripsi yang valid";
+            header("Location: " . $_SERVER['PHP_SELF']);
+            exit();
+        }
+        
         $total_biaya_pengembalian = $_POST['total_biaya_pengembalian'];
 
-        // Get old quantity
-        $stmt = $config->prepare("SELECT jumlah FROM pengembalian WHERE id_pengembalian = ?");
+        // Fetch old return details - SEBELUM TRANSACTION
+        $stmt = $config->prepare("SELECT id_restock, jumlah FROM pengembalian WHERE id_pengembalian = ?");
         $stmt->bind_param("s", $id_pengembalian);
         $stmt->execute();
         $result = $stmt->get_result();
-        $row = $result->fetch_assoc();
-        $jumlah_lama = $row['jumlah'];
+        $old_data = $result->fetch_assoc();
+        $id_restock_lama = $old_data['id_restock'];
+        $jumlah_lama = $old_data['jumlah'];
 
         // Start transaction
         $config->begin_transaction();
 
         try {
-            // Update pengembalian table
+            // Validate stock for new restock considering the difference
+            $selisih_jumlah = $jumlah_baru - $jumlah_lama;
+            if (!validateStockForRestock($config, $id_restock_baru, abs($selisih_jumlah))) {
+                throw new Exception("Stok untuk restock {$id_restock_baru} tidak mencukupi untuk update");
+            }
+
+            // Update return data
             $stmt = $config->prepare("UPDATE pengembalian SET 
-            id_restock = ?, id_supplier = ?, nama_barang = ?, tanggal_pengembalian = ?, 
-            jumlah = ?, keterangan = ?, total_biaya_pengembalian = ? 
-            WHERE id_pengembalian = ?");
-        $stmt->bind_param("sissssis", $id_restock, $id_supplier, $nama_barang, 
-                          $tanggal_pengembalian, $jumlah_baru, $keterangan, 
-                          $total_biaya_pengembalian, $id_pengembalian);
+                id_restock = ?, 
+                id_supplier = ?, 
+                nama_barang = ?, 
+                tanggal_pengembalian = ?, 
+                jumlah = ?, 
+                keterangan = ?, 
+                total_biaya_pengembalian = ? 
+                WHERE id_pengembalian = ?");
+            $stmt->bind_param("sississs", 
+                $id_restock_baru, 
+                $id_supplier, 
+                $nama_barang, 
+                $tanggal_pengembalian, 
+                $jumlah_baru, 
+                $keterangan,  
+                $total_biaya_pengembalian, 
+                $id_pengembalian
+            );
             $stmt->execute();
 
-            // Update stock in restock table
-            $selisih = $jumlah_baru - $jumlah_lama;
+            // Return stock to old restock
+            $stmt = $config->prepare("UPDATE restock SET jumlah = jumlah + ? WHERE id_restock = ?");
+            $stmt->bind_param("is", $jumlah_lama, $id_restock_lama);
+            $stmt->execute();
+
+            // Reduce stock from new restock
             $stmt = $config->prepare("UPDATE restock SET jumlah = jumlah - ? WHERE id_restock = ?");
-            $stmt->bind_param("ii", $selisih, $id_restock);
+            $stmt->bind_param("is", $jumlah_baru, $id_restock_baru);
             $stmt->execute();
 
             $config->commit();
-            $stmt->close();
+            $_SESSION['success'] = "Berhasil memperbarui data pengembalian";
         } catch (Exception $e) {
             $config->rollback();
-            throw $e;
+            $_SESSION['error'] = $e->getMessage();
         }
-    } elseif (isset($_POST['delete'])) {
-        // Delete return data
+        
+        header("Location: " . $_SERVER['PHP_SELF']);
+        exit();
+    }
+
+    // Hapus Data Pengembalian
+    elseif (isset($_POST['delete'])) {
         $id_pengembalian = $_POST['id_pengembalian_data'];
         
-        // Get return data before deletion
+        // Fetch return data before deletion
         $stmt = $config->prepare("SELECT id_restock, jumlah FROM pengembalian WHERE id_pengembalian = ?");
         $stmt->bind_param("s", $id_pengembalian);
         $stmt->execute();
@@ -111,31 +185,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $config->begin_transaction();
 
         try {
-            // Delete from pengembalian
+            // Delete from pengembalian table
             $stmt = $config->prepare("DELETE FROM pengembalian WHERE id_pengembalian = ?");
             $stmt->bind_param("s", $id_pengembalian);
             $stmt->execute();
 
-            // Restore stock in restock
+            // Return stock to restock
             $stmt = $config->prepare("UPDATE restock SET jumlah = jumlah + ? WHERE id_restock = ?");
-            $stmt->bind_param("ii", $jumlah, $id_restock);
+            $stmt->bind_param("is", $jumlah, $id_restock);
             $stmt->execute();
 
             $config->commit();
-            $stmt->close();
+            $_SESSION['success'] = "Berhasil menghapus data pengembalian";
         } catch (Exception $e) {
             $config->rollback();
-            throw $e;
+            $_SESSION['error'] = $e->getMessage();
         }
+        
+        header("Location: " . $_SERVER['PHP_SELF']);
+        exit();
     }
 }
 
-// Get restock data for dropdown
-$restock_query = "SELECT r.*, s.nama_supplier FROM restock r 
-                  LEFT JOIN supplier s ON r.id_supplier = s.id_supplier";
-$restock_result = $config->query($restock_query);
-
-// Process search for returns
+// Proses pencarian
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 
 if (!empty($search)) {
@@ -168,6 +240,42 @@ if (!empty($search)) {
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="style/pengembalian.css" rel="stylesheet" type="text/css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .auto-dismiss {
+            animation: fadeOut 5s forwards;
+        }
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { opacity: 0; display: none; }
+        }
+    </style>
 </head>
 <body>
     <?php include('sidebar.php'); ?>
@@ -176,6 +284,22 @@ if (!empty($search)) {
             <i class="fas fa-undo"></i>
             Data Pengembalian Barang
         </h1>
+
+        <?php
+        // Display success or error messages with auto-dismiss
+        if (isset($_SESSION['success']) && 
+            (!isset($_SESSION['show_message_until']) || time() <= $_SESSION['show_message_until'])) {
+            echo "<div class='alert alert-success auto-dismiss'>" . htmlspecialchars($_SESSION['success']) . "</div>";
+            unset($_SESSION['success']);
+        }
+        if (isset($_SESSION['error']) && 
+            (!isset($_SESSION['show_message_until']) || time() <= $_SESSION['show_message_until'])) {
+            echo "<div class='alert alert-danger auto-dismiss'>" . htmlspecialchars($_SESSION['error']) . "</div>";
+            unset($_SESSION['error']);
+        }
+        // Clear the timer
+        unset($_SESSION['show_message_until']);
+        ?>
 
         <div class="top-actions">
             <button class="btn-add" onclick="openAddForm()">
@@ -220,14 +344,25 @@ if (!empty($search)) {
                         <td><?= $row['keterangan']; ?></td>
                         <td>Rp <?= number_format($row['total_biaya_pengembalian'], 0, ',', '.'); ?></td>
                         <td>
-                            <form method="POST" style="display:inline;" 
-                                  onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?');">
-                                <input type="hidden" name="id_pengembalian_data" value="<?= $row['id_pengembalian']; ?>">
-                                <button type="submit" name="delete" class="btn-delete">Hapus</button>
-                            </form>
-                            <button onclick="openUpdateForm(<?= htmlspecialchars(json_encode($row)) ?>)" 
-                                    class="btn-update">Edit</button>
+                            <div style="display: flex; gap: 10px; justify-content: center;">
+                                <!-- Tombol Hapus -->
+                                <form method="POST" style="display:inline;" 
+                                    onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?');">
+                                    <input type="hidden" name="id_pengembalian_data" value="<?= $row['id_pengembalian']; ?>">
+                                    <button type="submit" name="delete" 
+                                        style="background: #dc3545; border: none; border-radius: 5px; padding: 10px; cursor: pointer; transition: background 0.3s;">
+                                        <i class="fa fa-trash" style="color: black; font-size: 20px;"></i>
+                                    </button>
+                                </form>
+
+                                <!-- Tombol Edit -->
+                                <button onclick="openUpdateForm(<?= htmlspecialchars(json_encode($row)) ?>)" 
+                                style="background: #ffc107; border: none; border-radius: 5px; padding: 10px; cursor: pointer; transition: background 0.3s;">
+                                    <i class="fa fa-pencil-alt" style="color: black; font-size: 20px;"></i>
+                                </button>
+                            </div>
                         </td>
+
                     </tr>
                 <?php endwhile; ?>
             </tbody>
@@ -243,17 +378,19 @@ if (!empty($search)) {
                 <div class="form-container">
                     <div class="form-group">
                         <label for="id_restock">ID Restock</label>
-                        <select name="id_restock" id="id_restock" class="form-control" required 
-                                onchange="updateSupplierAndPrice()">
+                        <select name="id_restock" id="id_restock" class="form-control" required onchange="updateSupplierAndPrice()">
                             <option value="">- Pilih ID Restock -</option>
                             <?php 
+                            // Reset pointer to beginning of result set
                             $restock_result->data_seek(0);
                             while ($restock = $restock_result->fetch_assoc()): 
                             ?>
                                 <option value="<?= $restock['id_restock']; ?>" 
                                         data-supplier="<?= $restock['id_supplier']; ?>"
+                                        data-supplier-name="<?= $restock['nama_supplier']; ?>"
                                         data-harga="<?= $restock['harga_beli']; ?>"
-                                        data-stok="<?= $restock['jumlah']; ?>">
+                                        data-stok="<?= $restock['jumlah']; ?>"
+                                        data-nama-barang="<?= $restock['nama_barang']; ?>">
                                     <?= $restock['id_restock']; ?> - <?= $restock['nama_barang']; ?> 
                                     (Stok: <?= $restock['jumlah']; ?>)
                                 </option>
@@ -277,7 +414,7 @@ if (!empty($search)) {
                     <div class="form-group">
                         <label for="jumlah">Jumlah</label>
                         <input type="number" name="jumlah" id="jumlah" class="form-control" required 
-                               oninput="calculateTotal()">
+                               oninput="calculateTotal()" min="1">
                     </div>
                     <div class="form-group">
                         <label for="keterangan">Keterangan</label>
@@ -308,13 +445,16 @@ if (!empty($search)) {
                                 onchange="updateSupplierAndPriceEdit()">
                             <option value="">- Pilih ID Restock -</option>
                             <?php 
+                            // Reset pointer to beginning of result set
                             $restock_result->data_seek(0);
                             while ($restock = $restock_result->fetch_assoc()): 
                             ?>
                                 <option value="<?= $restock['id_restock']; ?>" 
                                         data-supplier="<?= $restock['id_supplier']; ?>"
+                                        data-supplier-name="<?= $restock['nama_supplier']; ?>"
                                         data-harga="<?= $restock['harga_beli']; ?>"
-                                        data-stok="<?= $restock['jumlah']; ?>">
+                                        data-stok="<?= $restock['jumlah']; ?>"
+                                        data-nama-barang="<?= $restock['nama_barang']; ?>">
                                     <?= $restock['id_restock']; ?> - <?= $restock['nama_barang']; ?> 
                                     (Stok: <?= $restock['jumlah']; ?>)
                                 </option>
@@ -322,7 +462,7 @@ if (!empty($search)) {
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="edit_id_supplier">Supplier</label>
+                        <label for="edit_supplier_display">Supplier</label>
                         <input type="text" id="edit_supplier_display" class="form-control" readonly>
                         <input type="hidden" name="id_supplier" id="edit_id_supplier">
                     </div>
@@ -338,12 +478,37 @@ if (!empty($search)) {
                     <div class="form-group">
                         <label for="edit_jumlah">Jumlah</label>
                         <input type="number" name="jumlah" id="edit_jumlah" class="form-control" 
-                               oninput="calculateTotalEdit()" required>
+                               oninput="calculateTotalEdit()" required min="1">
                     </div>
                     <div class="form-group">
-                        <label for="edit_keterangan">Keterangan</label>
-                        <textarea name="keterangan" id="edit_keterangan" class="form-control" required></textarea>
+                    <label for="edit_keterangan">Keterangan</label>
+                    <textarea 
+                        name="keterangan" 
+                        id="edit_keterangan" 
+                        class="form-control" 
+                        required 
+                        placeholder="Masukkan keterangan pengembalian"
+                        oninput="validateKeterangan(this)"
+                    ></textarea>
+                    <div id="keterangan-error" class="invalid-feedback" style="display: none;">
+                        Keterangan tidak boleh kosong
                     </div>
+                        </div>
+
+                    <script>
+                    function validateKeterangan(textarea) {
+                        const errorDiv = document.getElementById('keterangan-error');
+                        if (textarea.value.trim() === '') {
+                            textarea.classList.add('is-invalid');
+                            errorDiv.style.display = 'block';
+                            return false;
+                        } else {
+                            textarea.classList.remove('is-invalid');
+                            errorDiv.style.display = 'none';
+                            return true;
+                        }
+                    }
+                    </script>
                     <div class="form-group">
                         <label for="edit_total_biaya_pengembalian">Total Biaya Pengembalian</label>
                         <input type="number" name="total_biaya_pengembalian" id="edit_total_biaya_pengembalian" 
@@ -360,6 +525,16 @@ if (!empty($search)) {
         let currentHargaBeliEdit = 0;
 
         function openAddForm() {
+            // Reset form
+            document.getElementById('id_restock').selectedIndex = 0;
+            document.getElementById('supplier_display').value = '';
+            document.getElementById('id_supplier').value = '';
+            document.getElementById('nama_barang').value = '';
+            document.getElementById('tanggal_pengembalian').value = '';
+            document.getElementById('jumlah').value = '';
+            document.getElementById('keterangan').value = '';
+            document.getElementById('total_biaya_pengembalian').value = '';
+
             document.getElementById('addModal').style.display = "block";
         }
 
@@ -370,13 +545,26 @@ if (!empty($search)) {
         function updateSupplierAndPrice() {
             const select = document.getElementById('id_restock');
             const option = select.options[select.selectedIndex];
-            const supplierId = option.getAttribute('data-supplier');
-            const hargaBeli = option.getAttribute('data-harga');
             
-            document.getElementById('id_supplier').value = supplierId;
-            document.getElementById('supplier_display').value = option.text.split(' - ')[0];
-            currentHargaBeli = parseFloat(hargaBeli);
-            calculateTotal();
+            if (option.value) {
+                const supplierId = option.getAttribute('data-supplier');
+                const supplierName = option.getAttribute('data-supplier-name');
+                const hargaBeli = option.getAttribute('data-harga');
+                const namaBarang = option.getAttribute('data-nama-barang');
+                
+                document.getElementById('id_supplier').value = supplierId;
+                document.getElementById('supplier_display').value = supplierName;
+                document.getElementById('nama_barang').value = namaBarang;
+                
+                currentHargaBeli = parseFloat(hargaBeli);
+                calculateTotal();
+            } else {
+                // Reset fields if no option selected
+                document.getElementById('id_supplier').value = '';
+                document.getElementById('supplier_display').value = '';
+                document.getElementById('nama_barang').value = '';
+                document.getElementById('total_biaya_pengembalian').value = '';
+            }
         }
 
         function calculateTotal() {
@@ -386,24 +574,47 @@ if (!empty($search)) {
         }
 
         function openUpdateForm(data) {
-            data = typeof data === 'string' ? JSON.parse(data) : data;
-            document.getElementById('edit_id_pengembalian').value = data.id_pengembalian;
-            document.getElementById('edit_id_restock').value = data.id_restock;
-            document.getElementById('edit_id_supplier').value = data.id_supplier;
-            document.getElementById('edit_supplier_display').value = data.nama_supplier;
-            document.getElementById('edit_nama_barang').value = data.nama_barang;
-            document.getElementById('edit_tanggal_pengembalian').value = data.tanggal_pengembalian;
-            document.getElementById('edit_jumlah').value = data.jumlah;
-            document.getElementById('edit_keterangan').value = data.keterangan;
-            document.getElementById('edit_total_biaya_pengembalian').value = data.total_biaya_pengembalian;
+    // Jika data berupa string JSON, parse dulu
+    data = typeof data === 'string' ? JSON.parse(data) : data;
+    
+    console.log("Data untuk edit:", data);
+
+    // Isi form dengan data yang diterima
+    document.getElementById('edit_id_pengembalian').value = data.id_pengembalian || '';
+    document.getElementById('edit_nama_barang').value = data.nama_barang || '';
+    document.getElementById('edit_tanggal_pengembalian').value = data.tanggal_pengembalian || '';
+    document.getElementById('edit_jumlah').value = data.jumlah || '';
+
+    // Pastikan keterangan diisi dengan string, bahkan jika nilainya '0'
+    document.getElementById('edit_keterangan').value = data.keterangan !== null && data.keterangan !== undefined 
+        ? String(data.keterangan).trim() 
+        : '';
+
+    document.getElementById('edit_total_biaya_pengembalian').value = data.total_biaya_pengembalian || '';
+
+    // Set dropdown restock
+    const select = document.getElementById('edit_id_restock');
+    for (let i = 0; i < select.options.length; i++) {
+        if (select.options[i].value === data.id_restock) {
+            select.selectedIndex = i;
+
+            // Ambil data supplier dari atribut tambahan
+            const option = select.options[i];
+            const supplierId = option.getAttribute('data-supplier');
+            const supplierName = option.getAttribute('data-supplier-name');
+            const hargaBeli = option.getAttribute('data-harga');
+
+            document.getElementById('edit_id_supplier').value = supplierId || '';
+            document.getElementById('edit_supplier_display').value = supplierName || '';
             
-            // Get harga_beli from selected restock option
-            const select = document.getElementById('edit_id_restock');
-            const option = select.options[select.selectedIndex];
-            currentHargaBeliEdit = parseFloat(option.getAttribute('data-harga'));
-            
-            document.getElementById('editModal').style.display = "block";
+            currentHargaBeliEdit = parseFloat(hargaBeli || 0);
+            break;
         }
+    }
+
+    // Tampilkan modal edit
+    document.getElementById('editModal').style.display = "block";
+}
 
         function closeEditForm() {
             document.getElementById('editModal').style.display = "none";
@@ -412,13 +623,24 @@ if (!empty($search)) {
         function updateSupplierAndPriceEdit() {
             const select = document.getElementById('edit_id_restock');
             const option = select.options[select.selectedIndex];
-            const supplierId = option.getAttribute('data-supplier');
-            const hargaBeli = option.getAttribute('data-harga');
             
-            document.getElementById('edit_id_supplier').value = supplierId;
-            document.getElementById('edit_supplier_display').value = option.text.split(' - ')[0];
-            currentHargaBeliEdit = parseFloat(hargaBeli);
-            calculateTotalEdit();
+            if (option.value) {
+                const supplierId = option.getAttribute('data-supplier');
+                const supplierName = option.getAttribute('data-supplier-name');
+                const hargaBeli = option.getAttribute('data-harga');
+                const namaBarang = option.getAttribute('data-nama-barang');
+                
+                document.getElementById('edit_id_supplier').value = supplierId;
+                document.getElementById('edit_supplier_display').value = supplierName;
+                
+                currentHargaBeliEdit = parseFloat(hargaBeli);
+                calculateTotalEdit();
+            } else {
+                // Reset fields if no option selected
+                document.getElementById('edit_id_supplier').value = '';
+                document.getElementById('edit_supplier_display').value = '';
+                document.getElementById('edit_total_biaya_pengembalian').value = '';
+            }
         }
 
         function calculateTotalEdit() {
