@@ -78,7 +78,8 @@ foreach ($restock_data as $index => $restock) {
 
 // Summary row
 $pdf->SetFont('helvetica', 'B', 10);
-$pdf->Cell(140, 8, 'Total', 1, 0, 'R', true);
+// Menyesuaikan kolom total agar sejajar dengan tabel
+$pdf->Cell(125, 8, 'Total', 1, 0, 'R', true); 
 $pdf->Cell(15, 8, $total_jumlah, 1, 0, 'C', true);
 $pdf->Cell(25, 8, '-', 1, 0, 'C', true);
 $pdf->Cell(25, 8, 'Rp ' . number_format($total_harga, 0, ',', '.'), 1, 1, 'C', true);

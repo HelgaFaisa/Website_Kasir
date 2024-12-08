@@ -55,31 +55,31 @@ $pdf->Ln(5);
 $pdf->SetFont('helvetica', 'B', 10);
 $pdf->SetFillColor(230, 230, 230);
 $pdf->Cell(10, 8, 'No', 1, 0, 'C', true);
-$pdf->Cell(30, 8, 'Invoice', 1, 0, 'C', true);
+$pdf->Cell(35, 8, 'Invoice', 1, 0, 'C', true);
 $pdf->Cell(30, 8, 'Tanggal', 1, 0, 'C', true);
-$pdf->Cell(30, 8, 'Total', 1, 0, 'C', true);
-$pdf->Cell(25, 8, 'Bayar', 1, 0, 'C', true);
-$pdf->Cell(25, 8, 'Kembali', 1, 0, 'C', true);
-$pdf->Cell(20, 8, 'Diskon', 1, 1, 'C', true);
+$pdf->Cell(35, 8, 'Total', 1, 0, 'C', true);
+$pdf->Cell(28, 8, 'Bayar', 1, 0, 'C', true);
+$pdf->Cell(28, 8, 'Kembali', 1, 0, 'C', true);
+$pdf->Cell(22, 8, 'Diskon', 1, 1, 'C', true);
 
 // Table content
 $pdf->SetFont('helvetica', '', 10);
 foreach ($sales_data as $index => $sale) {
     $pdf->Cell(10, 8, $index + 1, 1, 0, 'C');
-    $pdf->Cell(30, 8, $sale['invoice'], 1, 0, 'C');
+    $pdf->Cell(35, 8, $sale['invoice'], 1, 0, 'C');
     $pdf->Cell(30, 8, date('Y-m-d', strtotime($sale['tanggal_input'])), 1, 0, 'C');
-    $pdf->Cell(30, 8, 'Rp ' . number_format($sale['total'], 0, ',', '.'), 1, 0, 'C');
-    $pdf->Cell(25, 8, 'Rp ' . number_format($sale['bayar'], 0, ',', '.'), 1, 0, 'C');
-    $pdf->Cell(25, 8, 'Rp ' . number_format($sale['kembali'], 0, ',', '.'), 1, 0, 'C');
-    $pdf->Cell(20, 8, $sale['diskon'] . '%', 1, 1, 'C');
+    $pdf->Cell(35, 8, 'Rp ' . number_format($sale['total'], 0, ',', '.'), 1, 0, 'C');
+    $pdf->Cell(28, 8, 'Rp ' . number_format($sale['bayar'], 0, ',', '.'), 1, 0, 'C');
+    $pdf->Cell(28, 8, 'Rp ' . number_format($sale['kembali'], 0, ',', '.'), 1, 0, 'C');
+    $pdf->Cell(22, 8, $sale['diskon'] . '%', 1, 1, 'C');
 }
 
 // Summary row
 $pdf->SetFont('helvetica', 'B', 10);
-$pdf->Cell(155, 8, 'Total', 1, 0, 'R', true);
-$pdf->Cell(30, 8, 'Rp ' . number_format($total_penjualan, 0, ',', '.'), 1, 0, 'C', true);
-$pdf->Cell(25, 8, 'Rp ' . number_format($total_bayar, 0, ',', '.'), 1, 0, 'C', true);
-$pdf->Cell(25, 8, 'Rp ' . number_format($total_kembali, 0, ',', '.'), 1, 1, 'C', true);
+$pdf->Cell(160, 8, 'Total', 1, 0, 'R', true);
+$pdf->Cell(35, 8, 'Rp ' . number_format($total_penjualan, 0, ',', '.'), 1, 0, 'C', true);
+$pdf->Cell(28, 8, 'Rp ' . number_format($total_bayar, 0, ',', '.'), 1, 0, 'C', true);
+$pdf->Cell(28, 8, 'Rp ' . number_format($total_kembali, 0, ',', '.'), 1, 1, 'C', true);
 
 // Footer
 $pdf->Ln(5);
