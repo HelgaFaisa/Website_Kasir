@@ -550,7 +550,10 @@ header {
         // Search functionality
         $('#searchInput').on('keyup', function() {
     let searchTerm = $(this).val().toLowerCase();
-    console.log("Searching for:", searchTerm);  // Debugging log
+    if (searchTerm === '') {
+        $('#searchResults').html(''); // Kosongkan hasil jika input kosong
+        return;
+    }
     let resultHTML = '<table><thead><tr><th>Kode</th><th>Nama</th><th>Stok</th><th>Harga</th><th>Aksi</th></tr></thead><tbody>';
     
     availableItems.forEach(item => {
@@ -579,27 +582,34 @@ header {
     $('#searchResults').html(resultHTML);
 });
 
-
         // Add to cart functionality
-        $(document).on('click', '.add-to-cart', function() {
-            let kode = $(this).data('kode');
-            let nama = $(this).data('nama');
-            let harga = $(this).data('harga');
-            let stok = $(this).data('stok');
+        $(document).on('click', '.add-to-cart', function(e) {
+    e.preventDefault(); // Mencegah aksi default (refresh halaman)
 
-            let existingItem = cart.find(item => item.kode === kode);
-            if (existingItem) {
-                existingItem.jumlah += 1;
-            } else {
-                cart.push({
-                    kode: kode,
-                    nama: nama,
-                    harga: harga,
-                    jumlah: 1
-                });
-            }
-            updateCartDisplay();
+    let kode = $(this).data('kode');
+    let nama = $(this).data('nama');
+    let harga = $(this).data('harga');
+
+    let existingItem = cart.find(item => item.kode === kode);
+    if (existingItem) {
+        existingItem.jumlah += 1;
+    } else {
+        cart.push({
+            kode: kode,
+            nama: nama,
+            harga: harga,
+            jumlah: 1
         });
+    }
+
+    // Perbarui tabel transaksi
+    updateCartDisplay();
+
+    // Kosongkan hasil pencarian dan input pencarian
+    $('#searchResults').html('');
+    $('#searchInput').val('');
+});
+
 
         // Update cart display
         function updateCartDisplay() {
@@ -804,21 +814,27 @@ printReceipt('INV-001', items, bayar);
 
         // Update date and time
         function updateDateTime() {
-            let currentDateTime = new Date();
-            let formattedDate = currentDateTime.toLocaleString('id-ID', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            });
-            $('#tanggal').val(formattedDate);
-        }
+    let currentDateTime = new Date();
+    
+    // Ambil bagian tanggal
+    let day = String(currentDateTime.getDate()).padStart(2, '0');
+    let month = String(currentDateTime.getMonth() + 1).padStart(2, '0'); // Bulan dimulai dari 0
+    let year = currentDateTime.getFullYear();
 
-        // Call function initially and then every second
-        updateDateTime();
-        setInterval(updateDateTime, 1000);
+    // Ambil bagian waktu
+    let hours = String(currentDateTime.getHours()).padStart(2, '0');
+    let minutes = String(currentDateTime.getMinutes()).padStart(2, '0');
+
+    // Format akhir
+    let formattedDate = `${day}/${month}/${year} jam ${hours}:${minutes}`;
+
+    // Tampilkan ke input dengan id 'tanggal'
+    $('#tanggal').val(formattedDate);
+}
+
+// Panggil fungsi pertama kali, lalu setiap 1 detik
+updateDateTime();
+setInterval(updateDateTime, 1000);
     </script>
 </body>
 </html>
