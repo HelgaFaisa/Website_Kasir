@@ -389,18 +389,18 @@ header {
 </head>
 <body>
     <?php include('sidebar.php'); ?>
-    <div class="container">
-        <div class="kasir-section">
+        <div class="container">
             <div class="search-section">
-                <h4>Cari Barang</h4>
+                <h4><i class="fas fa-search"></i> Cari Barang</h4>
                 <input type="text" id="searchInput" placeholder="Masukkan kode atau nama barang">
                 <div id="searchResults"></div>
             </div>
-
             <div class="cart-section">
                 <div class="kasir-header">
-                    <h4>KASIR</h4>
-                    <button class="btn btn-danger" id="resetCart">Reset Keranjang</button>
+                    <h4><i class="fas fa-cash-register"></i> KASIR</h4>
+                    <button class="btn btn-danger" id="resetCart">
+                        <i class="fas fa-trash"></i> Reset Keranjang
+                    </button>
                 </div>
 
                 <form id="salesForm" method="POST">
