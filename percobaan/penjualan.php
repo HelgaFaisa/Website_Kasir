@@ -687,13 +687,12 @@ header {
             $('#kembali').val(''); // Kosongkan kembalian
         });
 
-        $('#diskon').on('input', function() {
+        $('#diskon').on('input', function () {
     let diskon = parseFloat($(this).val()) || 0;
-    if (diskon < 0 || diskon > 100) {
-        alert('Diskon harus antara 0 dan 100!');
-        $(this).val(0); // Kembalikan ke 0 jika nilai tidak valid
-    }
-    calculateTotal(); // Hitung ulang total
+    if (diskon < 0) diskon = 0;
+    if (diskon > 100) diskon = 100;
+    $(this).val(diskon); 
+    calculateTotal();
 });
 
 
