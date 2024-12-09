@@ -94,7 +94,8 @@ for ($page = 0; $page < $pages_needed; $page++) {
     $col = 0;
     
     for ($i = $start; $i < $end; $i++) {
-        $unique_code = $barang['kodebarang'] . '-' . ($i + 1);
+        // Gunakan kode barang asli tanpa menambahkan nomor urut
+        $unique_code = $barang['kodebarang'];
         
         // Hitung posisi
         $x = 15 + ($col * 65);  // Jarak horizontal 65mm
