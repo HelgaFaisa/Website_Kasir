@@ -140,6 +140,7 @@ echo json_encode([
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <style>
+/* Global Styles */
 body {
     font-family: 'Roboto', sans-serif;
     background-color: #f9f9f9;
@@ -147,9 +148,10 @@ body {
     line-height: 1.6;
     margin: 0;
 }
+
 .container {
-    max-width: 100%;
-    margin: 20px auto; /* Pusatkan konten */
+    max-width: 1200px;
+    margin: 20px auto;
     padding: 20px;
     display: flex;
     flex-wrap: wrap;
@@ -157,27 +159,9 @@ body {
     background-color: #fff;
     border-radius: 10px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-    .container {
-        margin-left: 0;
-        padding: 10px;
-    }
-
-    .content-container {
-        margin-left: 180px;
-    }
-
-
-.container {
-    max-width: 1200px; /* Lebar maksimum */
-    margin: 20px auto; /* Pusatkan konten */
-    padding: 20px;
-    display: flex; /* Gunakan flex untuk layout */
-    flex-wrap: wrap;
-    gap: 20px; /* Beri jarak antar elemen */
-    background-color: #fff;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    min-height: 100vh;
+    margin-left: 240px; /* Sesuaikan dengan sidebar */
+    transition: margin-left 0.3s ease;
 }
 
 header {
@@ -190,14 +174,76 @@ header {
     border-bottom: 2px solid #5a0000;
 }
 
+/* Kasir Section */
 .kasir-section {
     background-color: #fff;
     padding: 20px;
     border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
-.search-section,
+.kasir-header h4 {
+    font-size: 24px;
+    color: #800000;
+    border-bottom: 2px solid #800000;
+    padding-bottom: 10px;
+}
+
+/* Search Section */
+.search-section {
+    flex: 1;
+    background: #f4f4f4;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.search-section h4 {
+    font-size: 20px;
+    color: #800000;
+}
+
+#searchInput {
+    width: 100%;
+    max-width: 950px;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    margin-top: 10px;
+}
+
+#searchInput:focus {
+    outline: none;
+    border-color: #800000;
+}
+
+#searchResults table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    border: 2px solid #800000;
+}
+
+#searchResults th, #searchResults td {
+    padding: 10px;
+    border: 1px solid #800000;
+    text-align: center;
+}
+
+#searchResults th {
+    background-color: #800000;
+    color: white;
+}
+
+#searchResults tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+#searchResults tr:hover {
+    background-color: #f1f1f1;
+}
+
+/* Cart Section */
 .cart-section {
     flex: 1;
     background: #f4f4f4;
@@ -205,61 +251,55 @@ header {
     padding: 15px;
 }
 
-.search-section h4,
-.cart-section h4 {
-    margin-bottom: 15px;
-    color: #800000; /* Maroon */
-    font-weight: bold;
-}
-
-#searchInput {
-    width: 100%; /* Sesuaikan dengan lebar container */
-    max-width: 950px; /* Tambahkan batas maksimum jika diperlukan */
-    padding: 10px; /* Tambahkan padding untuk estetika */
-    font-size: 16px; /* Sesuaikan ukuran font */
-    border: 1px solid #ccc; /* Tambahkan border */
-    border-radius: 10px; /* Buat sudut lebih halus */
-}
-
-
-#searchResults table {
+#cart-items {
     width: 100%;
     border-collapse: collapse;
     margin-top: 10px;
-}
-
-#searchResults th,
-#searchResults td {
-    padding: 10px;
-    border: 1px solid #ddd;
-    text-align: center;
-}
-
-#cart-items {
-    table-layout: fixed; /* Tetapkan lebar kolom */
-    word-wrap: break-word; /* Bungkus teks panjang */
+    border: 2px solid #800000;
 }
 
 #cart-items th, #cart-items td {
     padding: 10px;
     text-align: center;
 }
+
+#cart-items th {
+    background-color: #800000;
+    color: white;
+}
+
+#cart-items tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+#cart-items tr:hover {
+    background-color: #f1f1f1;
+}
+
+/* Payment Section */
 .payment-section {
     display: grid;
-    grid-template-columns: 1fr 1fr; /* Dua kolom untuk elemen */
-    gap: 15px; /* Beri jarak antar elemen */
-    margin-top: 20px; /* Jarak antara form pembayaran dan tabel */
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 20px;
 }
 
 .payment-section input {
     padding: 8px;
     font-size: 14px;
-    width: 100%; /* Agar input memenuhi kolom */
-    box-sizing: border-box; /* Untuk mencegah padding merusak layout */
+    width: 100%;
+    box-sizing: border-box;
 }
 
+.payment-section .btn-success {
+    grid-column: span 2;
+    margin-top: 10px;
+    padding: 10px 15px;
+    font-size: 16px;
+}
+
+/* Button Styles */
 .btn {
-    display: inline-block;
     padding: 10px 15px;
     border: none;
     border-radius: 6px;
@@ -271,12 +311,6 @@ header {
 .btn-success {
     background-color: #28a745;
     color: white;
-    padding: 10px 15px;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    margin-top: 10px;
 }
 
 .btn-success:hover {
@@ -284,237 +318,73 @@ header {
 }
 
 .btn-danger {
-    background-color: #dc3545;
+    background-color: #ff4d4d;
     color: white;
-}
-
-.btn-primary {
-    background-color: #800000; /* Maroon */
-    color: white;
-}
-
-#resetCart {
-    background-color: #800000; /* Maroon */
-    color: white;
-}
-#cart-items {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-    border: 2px solid #800000; /* Maroon border for the table */
-}
-
-#cart-items th, #cart-items td {
-    padding: 10px;
-    text-align: center;
-}
-#cart-items th:nth-child(1),
-#cart-items td:nth-child(1) {
-    width: 5%; /* Lebar kolom "No" */
-}
-
-#cart-items th:nth-child(2),
-#cart-items td:nth-child(2) {
-    width: 35%; /* Lebar kolom "Nama Barang" */
-}
-
-#cart-items th:nth-child(3),
-#cart-items td:nth-child(3),
-#cart-items th:nth-child(4),
-#cart-items td:nth-child(4),
-#cart-items th:nth-child(5),
-#cart-items td:nth-child(5) {
-    width: 15%; /* Lebar kolom lainnya */
-}
-
-#cart-items th:nth-child(6),
-#cart-items td:nth-child(6) {
-    width: 10%; /* Lebar kolom "Aksi" */
-}
-
-/* Table header (th) background color and text color */
-#cart-items th {
-    background-color: #800000; /* Maroon background for headers */
-    color: white; /* White text color for contrast */
-}
-
-/* Table rows */
-#cart-items tr:nth-child(even) {
-    background-color: #f2f2f2; /* Alternate row background for readability */
-}
-
-/* Table row hover effect for better interaction */
-#cart-items tr:hover {
-    background-color: #f1f1f1;
-}
-#totalSemua, #bayar, #diskon, #kembalian {
-    margin-bottom: 10px;
-}
-
-.container {
-    margin-left: 240px;
-    padding: 20px;
-    background-color: #fff;
-    min-height: 100vh;
-    transition: margin-left 0.3s ease;
-}
-
-.kasir-section {
-    background-color: #fff; /* White background for kasir section */
-    padding: 20px;
-    border-radius: 10px;
-}
-
-.kasir-header h4 {
-    font-size: 24px;
-    color: #800000; /* Maroon color for the header */
-    border-bottom: 2px solid #800000; /* Maroon underline */
-    padding-bottom: 10px;
-}
-
-.search-section {
-    margin-bottom: 20px;
-    padding: 15px;
-    border-radius: 5px;
-}
-
-.search-section h4 {
-    font-size: 20px;
-    color: #800000; /* Maroon color for the search title */
-}
-
-.search-section input {
-    padding: 10px;
-    width: 100%;
-    border: none; /* Removed the maroon border for search input */
-    border-radius: 5px;
-    margin-top: 10px;
-}
-
-#searchResults {
-    margin-top: 10px;
-    padding: 10px;
-    border-radius: 5px;
-}
-
-.btn-danger {
-    background-color: #ff4d4d; /* Red background for reset button */
-    color: white;
-    border: none; /* Removed the maroon border around the reset button */
-    border-radius: 5px;
 }
 
 .btn-danger:hover {
-    background-color: #ff3333; /* Darker red on hover */
-}
-/* Style for the search results table */
-#searchResults table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-    border: 2px solid #800000; /* Maroon border for the table */
+    background-color: #ff3333;
 }
 
-#searchResults th,
-#searchResults td {
-    padding: 10px;
-    border: 1px solid #800000; /* Maroon border for table cells */
-    text-align: center;
+.btn-primary {
+    background-color: #800000;
+    color: white;
 }
 
-#searchResults th {
-    background-color: #800000; /* Maroon background for header */
-    color: white; /* White text color for header */
-}
-
-#searchResults tr:nth-child(even) {
-    background-color: #f9f9f9; /* Lighter background for even rows */
-}
-
-#searchResults tr:hover {
-    background-color: #f1f1f1; /* Slightly darker background for hover effect */
-}
-.payment-section .btn-success {
-    grid-column: span 2; /* Tombol 'Bayar' meluas ke dua kolom */
-    margin-top: 10px; /* Jarak atas tombol */
-    padding: 10px 15px; /* Ukuran tombol lebih besar */
-    font-size: 16px; /* Teks tombol lebih besar */
-}
-
-@media (max-width: 768px) {
-    .container {
-        flex-direction: column;
-        padding: 10px;
-    }
-
-    .search-section,
-    .cart-section {
-        flex: 1;
-    }
-
-    @media (max-width: 768px) {
-    .payment-section {
-        grid-template-columns: 1fr; /* Susunan vertikal pada layar kecil */
-    }
-
-    #cart-items th, #cart-items td {
-        font-size: 12px; /* Kurangi ukuran font */
-    }
-
-    #searchInput {
-        font-size: 14px; /* Kurangi ukuran input pencarian */
-    }
-    .payment-section .btn-success {
-        grid-column: 1; /* Tombol menyesuaikan satu kolom */
-    }
-    /* Style untuk Modal */
+/* Modal Styles */
 .modal {
-    display: none; /* Modal disembunyikan secara default */
+    display: none;
     position: fixed;
     z-index: 1000;
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5); /* Latar belakang transparan */
+    background-color: rgba(0, 0, 0, 0.5);
+    overflow: auto;
 }
 
 .modal-content {
-    background-color: #fff;
-    margin: 10% auto;
+    background-color: #fefefe;
+    margin: 15% auto;
     padding: 20px;
-    border: 1px solid #800000; /* Warna Maroon */
-    border-radius: 10px;
+    border: 1px solid #800000;
     width: 80%;
-    max-width: 600px;
+    max-width: 500px;
+    border-radius: 10px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
-.modal-header {
-    font-size: 20px;
-    font-weight: bold;
-    color: #800000; /* Warna Maroon */
-    border-bottom: 2px solid #800000; /* Garis bawah maroon */
-    margin-bottom: 10px;
-    text-align: center;
+/* Responsiveness */
+@media (max-width: 768px) {
+    .container {
+        margin-left: 0;
+        flex-direction: column;
+        padding: 10px;
+    }
+
+    .payment-section {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-content {
+        width: 95%;
+        margin: 10% auto;
+    }
+
+    #cart-items th, #cart-items td {
+        font-size: 12px;
+    }
+
+    #searchInput {
+        font-size: 14px;
+    }
+
+    .payment-section .btn-success {
+        grid-column: 1;
+    }
 }
 
-.modal-body {
-    font-size: 16px;
-    color: #333; /* Warna teks utama */
-    margin-bottom: 20px;
-    text-align: center;
-}
-
-.modal-footer {
-    text-align: right;
-}
-
-.modal-footer .btn {
-    margin-left: 10px;
-}
-}
-}
 </style>
 </head>
 <body>
