@@ -467,6 +467,52 @@ header {
     .payment-section .btn-success {
         grid-column: 1; /* Tombol menyesuaikan satu kolom */
     }
+    /* Style untuk Modal */
+.modal {
+    display: none; /* Modal disembunyikan secara default */
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Latar belakang transparan */
+}
+
+.modal-content {
+    background-color: #fff;
+    margin: 10% auto;
+    padding: 20px;
+    border: 1px solid #800000; /* Warna Maroon */
+    border-radius: 10px;
+    width: 80%;
+    max-width: 600px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    font-size: 20px;
+    font-weight: bold;
+    color: #800000; /* Warna Maroon */
+    border-bottom: 2px solid #800000; /* Garis bawah maroon */
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.modal-body {
+    font-size: 16px;
+    color: #333; /* Warna teks utama */
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.modal-footer {
+    text-align: right;
+}
+
+.modal-footer .btn {
+    margin-left: 10px;
+}
 }
 }
 </style>
@@ -527,12 +573,9 @@ header {
                             <input type="number" id="bayar" name="bayar" required>
                             
                             <div>
-                                <button type="submit" class="btn btn-success" id="btnBayar">
-                                    <i class="fas fa-money-bill"></i> Bayar
-                                </button>
-                                <!-- <button type="button" class="btn btn-success" id="btnPrint">
-                                    <i class="fas fa-print"></i> Print Bukti
-                                </button> -->
+                            <button type="button" class="btn btn-success" id="btnBayar" onclick="openModal('myModal')">
+                                <i class="fas fa-money-bill"></i> Bayar
+                            </button>
                             </div>
                         </div>
                     </div>
@@ -834,6 +877,25 @@ printReceipt('INV-001', items, bayar);
 // Panggil fungsi pertama kali, lalu setiap 1 detik
 updateDateTime();
 setInterval(updateDateTime, 1000);
+
+// Fungsi untuk membuka modal
+function openModal(modalId) {
+    document.getElementById(modalId).style.display = 'block';
+}
+
+// Fungsi untuk menutup modal
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+}
+
+// Menutup modal jika klik di luar area modal
+window.onclick = function(event) {
+    const modal = document.querySelector('.modal');
+    if (event.target === modal) {
+        modal.style.display = 'none';
+    }
+};
+
     </script>
 </body>
 </html>
