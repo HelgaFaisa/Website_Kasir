@@ -443,9 +443,9 @@ header {
                             <input type="number" id="bayar" name="bayar" required>
                             
                             <div>
-                            <button type="button" class="btn btn-success" id="btnBayar" onclick="openModal('myModal')">
-                                <i class="fas fa-money-bill"></i> Bayar
-                            </button>
+                                <button type="submit" class="btn btn-success" id="btnBayar">
+                                    <i class="fas fa-money-bill"></i> Bayar
+                                </button>
                             </div>
                         </div>
                     </div>
