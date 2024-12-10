@@ -485,7 +485,7 @@ header {
                             data-nama="${item.nama_barang}"
                             data-stok="${item.stok}"
                             data-harga="${item.harga_jual}">
-                            Tambah
+                            <i class="fas fa-plus"></i>
                         </button>
                     </td>
                 </tr>
