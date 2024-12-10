@@ -200,6 +200,7 @@ header {
 .search-section h4 {
     font-size: 20px;
     color: #800000;
+    border-bottom: 2px solid #800000; /* Tambahkan garis bawah */
 }
 
 #searchInput {
