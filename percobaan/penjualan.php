@@ -543,7 +543,7 @@ header {
                         <td>Rp ${numberFormat(total)}</td>
                         <td>
                             <button type="button" class="btn btn-danger" onclick="removeItem(${index})">
-                                Hapus
+                                <i class="fas fa-trash"></i>
                             </button>
                         </td>
                     </tr>
