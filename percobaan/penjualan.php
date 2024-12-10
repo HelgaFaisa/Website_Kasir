@@ -195,12 +195,13 @@ header {
     border-radius: 6px;
     padding: 15px;
     margin-bottom: 20px;
+
 }
 
 .search-section h4 {
     font-size: 20px;
     color: #800000;
-    border-bottom: 2px solid #800000; /* Tambahkan garis bawah */
+    border-bottom: 2px solid #800000; /* Garis bawah */
 }
 
 #searchInput {
