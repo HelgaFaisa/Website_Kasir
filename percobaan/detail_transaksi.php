@@ -77,38 +77,54 @@ body {
 
 /* Judul */
 h1 {
-    color: maroon;
+    color: #800000;
     text-align: center;
     font-size: 32px;
+    border-bottom: 3px solid #800000;
+    padding-bottom: 10px;
+    margin-bottom: 30px;
 }
 
 /* Sub-Judul */
 h2 {
-    color: maroon;
+    color: #800000;
     font-size: 24px;
-    margin-top: 20px;
-    border-bottom: 2px solid maroon;
-    padding-bottom: 5px;
+    margin-top: 30px;
+    border-bottom: 3px solid #800000;
+    padding-bottom: 10px;
+    display: flex;
+    align-items: center;
+}
+
+h2 i {
+    margin-right: 15px;
+    color: #800000;
 }
 
 /* Tabel */
 table {
     width: 100%;
     margin: 20px 0;
-    border-collapse: collapse;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
 }
 
+
 th, td {
-    padding: 12px;
+    padding: 15px;
     text-align: left;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid #e0e0e0;
 }
 
 th {
-    background-color: maroon;
+    background-color: #800000;
     color: white;
     text-transform: uppercase;
+    font-weight: bold;
+    letter-spacing: 1px;
 }
 
 tr:nth-child(even) {
@@ -117,24 +133,34 @@ tr:nth-child(even) {
 
 tr:hover {
     background-color: #f1f1f1;
+    transition: background-color 0.3s ease;
+}
+
+td i {
+    margin-right: 10px;
+    color: #800000;
 }
 
 /* Tombol Kembali */
 .back-button {
-    background-color: maroon;
+    background-color: #800000;
     color: white;
     border: none;
     padding: 12px 20px;
     cursor: pointer;
     font-weight: bold;
-    border-radius: 4px;
-    display: inline-block;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     margin: 20px 0;
-    text-align: center;
+    gap: 10px;
 }
 
 .back-button:hover {
-    background-color: darkred;
+    background-color: #600000;
+    transform: scale(1.05);
 }
 
 .no-data {
@@ -163,11 +189,12 @@ tr:hover {
     }
 
     table {
-        width: 100%; /* Menyesuaikan lebar tabel untuk perangkat kecil */
+        border-radius: 10px;
     }
 
     th, td {
-        font-size: 14px; /* Ukuran font lebih kecil untuk perangkat kecil */
+        font-size: 14px;
+        padding: 10px;
     }
 
     h1 {
@@ -187,15 +214,15 @@ tr:hover {
 <body>
 <?php include('sidebar.php'); ?>
 <div class="content">
-    <h1>Detail Transaksi</h1>
+<h1><i class="fas fa-receipt"></i> Detail Transaksi</h1>
     
     <!-- Informasi Umum Transaksi -->
-    <h2>Informasi Umum Transaksi</h2>
+    <h2><i class="fas fa-info-circle"></i> Informasi Umum Transaksi</h2>
     <table>
         <thead>
-            <tr>
-                <th>Deskripsi</th>
-                <th>Detail</th>
+        <tr>
+                <th><i class="fas fa-tag"></i> Deskripsi</th>
+                <th><i class="fas fa-file-alt"></i> Detail</th>
             </tr>
         </thead>
         <tbody>
