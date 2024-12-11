@@ -83,7 +83,7 @@ try {
         position: relative;
         width: 100%;
         max-width: 400px;
-        margin: 20px auto;
+       
     }
 
     .search-container i {
@@ -97,12 +97,13 @@ try {
 
     .search-container input {
         width: 100%;
-        padding: 10px 10px 10px 35px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        font-size: 16px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        transition: all 0.3s ease;
+    max-width: 300px; /* Sesuaikan ukuran maksimal input pencarian */
+    padding: 10px 10px 10px 35px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
     }
 
     .search-container input:focus {
