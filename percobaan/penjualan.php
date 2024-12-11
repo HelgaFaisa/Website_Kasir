@@ -537,6 +537,27 @@ header {
     .payment-section .btn-success {
         grid-column: 1;
     }
+    .receipt-container {
+    text-align: center;
+    font-family: 'Courier New', Courier, monospace;
+    line-height: 1.6;
+    margin: 0 auto;
+    width: 80%;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+.receipt-container {
+    font-family: 'Courier New', Courier, monospace;
+}
+@media (max-width: 768px) {
+    .receipt-container {
+        width: 100%;
+        padding: 10px;
+    }
+}
+
 }
 
 </style>
@@ -832,35 +853,58 @@ function printReceipt(invoice, total, bayar, kembali) {
     const formattedBayar = numberFormat(bayar);
     const formattedKembali = numberFormat(kembali);
 
-    const storeName = "AdaAllshop";
-    const storeAddress = "Dusun Sumberjo, Yosorati, Sumberbaru, Jember";
-    const storePhone = "082257079817";
+    const storeName = "AdaAllshop Jember";
+    const storeAddressLine1 ="Perum Demang Mulya JL.Letjen Suprapto";
+    const storeAddressLine2 = "18,Kec.Sumbersari,Kab.Jember";
+    const storePhone = "089675330202";
 
-    // Prepare the receipt content
-    let receipt = `STRUK PEMBAYARAN\n`;
-    receipt += `Nama Toko: ${storeName}\n`;
-    receipt += `Alamat: ${storeAddress}\n`;
-    receipt += `Telepon: ${storePhone}\n\n`;
+   // Header struk
+   let receipt = `======================================\n`;
+    receipt += `          ${storeName}\n`;
+    receipt += `${storeAddressLine1}\n`;
+    receipt += `      ${storeAddressLine2}\n`;
+    receipt += `          HP: ${storePhone}\n`;
+    receipt += `======================================\n`;
+    receipt += `Invoice: ${invoice}\n\n`;
 
-    // Adding the items to the receipt (assuming you have the cart available)
-    cart.forEach(item => {
-        const itemTotal = item.jumlah * item.harga;
-        receipt += `${item.nama}    ${item.jumlah} x Rp ${numberFormat(item.harga)} = Rp ${numberFormat(itemTotal)}\n`;
-    });
+    // Isi struk (daftar belanja)
+    cart.forEach(item => { 
+    const itemTotal = item.jumlah * item.harga;
 
-    // Adding totals, bayar and kembali
-    receipt += `\nTotal Rp.     ${formattedTotal}\n`;
-    receipt += `Bayar Rp.     ${formattedBayar}\n`;
-    receipt += `Kembali Rp.   ${formattedKembali}\n`;
+    // Batasi panjang nama barang hingga 14 karakter (dengan pemotongan jika lebih panjang)
+    const namaBarang = item.nama.length > 14 ? item.nama.slice(0, 11) + '...' : item.nama;
 
-    receipt += `\nBarang yang sudah dibeli tidak dapat ditukar / dikembalikan.\n`;
-    receipt += `====== ${new Date().toISOString().slice(0, 19).replace('T', ' ')} ======\n`;
+    // Format jumlah dan harga pada baris kedua
+    const jumlahDanHarga = `${item.jumlah} x ${numberFormat(item.harga)}`.padEnd(14);
 
-    // Display or print the receipt
-    console.log(receipt); // This is just a simple log, you might want to open a print window.
+    // Format total harga pada baris kedua
+    const totalHarga = numberFormat(itemTotal).padStart(10);
+
+    // Tambahkan ke struk dengan format baru
+    receipt += `${namaBarang}\n`; // Nama barang di baris pertama
+    receipt += `${jumlahDanHarga} = ${totalHarga}\n`; // Jumlah x harga dan total di baris kedua
+});
+
+
+    // Total, pembayaran, dan kembalian
+    receipt += `\n======================================\n`;
+    receipt += `Total       : ${formattedTotal}\n`;
+    receipt += `Bayar       : ${formattedBayar}\n`;
+    receipt += `Kembali     : ${formattedKembali}\n`;
+    receipt += `======================================\n`;
+
+
+    // Catatan tambahan
+    receipt += `Barang yang sudah dibeli\n`;
+    receipt += `tidak dapat ditukar/dikembalikan.\n\n`;
+    receipt += `Tanggal: ${new Date().toLocaleString('id-ID')}\n`;
+    receipt += `======================================`;
+
+    // Tampilkan struk ke konsol atau cetak
+    console.log(receipt);
     
     // Trigger print dialog (this will print the receipt to the printer)
-    let printWindow = window.open('', '', 'height=400,width=600');
+    let printWindow = window.open('', '', 'height=600,width=400');
     printWindow.document.write('<pre>' + receipt + '</pre>');
     printWindow.document.close();
     printWindow.print();
@@ -874,8 +918,8 @@ function numberFormat(value) {
         minimumFractionDigits: 0
     });
 }
-// Panggil fungsi untuk mencetak struk
-printReceipt('INV-001', items, bayar);
+// Cetak struk
+printReceipt("INV-001", items, total, bayar, kembali);
     });
 
         // Update date and time
