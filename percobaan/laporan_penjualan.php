@@ -185,7 +185,7 @@ tbody tr:hover {
     .search-container i {
         position: absolute;
         left: 10px;
-        color: #aaa;
+        color: #800000;
         z-index: 1;
     }
     .search-container input {
