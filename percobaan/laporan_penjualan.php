@@ -154,15 +154,95 @@ tbody tr:hover {
     background-color: #f8f9fa;
     border-radius: 8px;
 }
+
+.report-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #800000;
+    }
+    .report-title {
+        color: #800000; /* Dark red color */
+        font-size: 26px;
+        font-weight: bold;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        position: relative;
+    }
+    .report-title i {
+        margin-right: 15px;
+        color: #800000;
+    }
+    
+    /* Improve search container styling */
+    .search-container {
+        display: flex;
+        align-items: center;
+        position: relative;
+    }
+    .search-container i {
+        position: absolute;
+        left: 10px;
+        color: #aaa;
+        z-index: 1;
+    }
+    .search-container input {
+        padding: 8px 8px 8px 35px;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        width: 250px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
+    .search-container input:focus {
+        outline: none;
+        border-color: #800000;
+        box-shadow: 0 0 5px rgba(128, 0, 0, 0.3);
+    }
+    /* Improve table controls */
+    .table-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 20px 0;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+    }
+    .table-controls select {
+        padding: 6px;
+        margin: 0 10px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+    }
+     /* Responsive adjustments */
+     @media (max-width: 768px) {
+        .filter-section {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        .button-container {
+            width: 100%;
+            justify-content: space-between;
+        }
+    }
     </style>
 </head>
 <body>
     <?php include('sidebar.php'); ?>
 
     <div class="main-content">
-        <h1 class="page-title">Laporan Penjualan</h1>
-
+    <!-- <h1 class="page-title">
+            <i class="fas fa-chart-line"></i>
+            Laporan Penjualan
+        </h1> -->
         <div class="report-section">
+        <div class="report-header">
+            <h1 class="report-title"><i class="fas fa-chart-line"></i> Laporan Penjualan</h1>
+        </div>
             <div class="filter-section">
                 <div>
                     <label>Periode Tanggal</label>
@@ -193,9 +273,10 @@ tbody tr:hover {
                     </select>
                     entries
                 </div>
-                <div>
-                    Search: <input type="text" onkeyup="searchTable(this.value)">
-                </div>
+                <div class="search-container"> 
+        <i class="fas fa-search"></i>
+        <input type="text" placeholder="Cari data..." onkeyup="searchTable(this.value)">
+    </div>
             </div>
 
             <table id="reportTable">
@@ -292,16 +373,34 @@ tbody tr:hover {
 
         function searchTable(query) {
             const rows = document.querySelectorAll('#reportTable tbody tr');
-            rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(query.toLowerCase()) ? '' : 'none';
-            });
+    let visibleCount = 0;
+    
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        if (text.includes(query.toLowerCase())) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
         }
 
         function changeEntries(value) {
-            console.log('Showing', value, 'entries per page');
-            // Implement pagination logic here
+            const rows = document.querySelectorAll('#reportTable tbody tr');
+    let visibleCount = 0;
+    
+    rows.forEach((row, index) => {
+        if (row.style.display !== 'none') {
+            if (visibleCount < value) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
         }
+    });
+}
     </script>
 </body>
 </html>
