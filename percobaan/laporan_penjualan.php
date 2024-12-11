@@ -387,20 +387,24 @@ tbody tr:hover {
         }
 
         function changeEntries(value) {
-            const rows = document.querySelectorAll('#reportTable tbody tr');
-    let visibleCount = 0;
+    const rows = document.querySelectorAll('#reportTable tbody tr');
     
+    // Ubah nilai menjadi angka
+    const limit = parseInt(value, 10);
+    
+    // Reset semua baris menjadi tersembunyi
+    rows.forEach(row => {
+        row.style.display = 'none';
+    });
+
+    // Tampilkan baris hingga batas yang dipilih
     rows.forEach((row, index) => {
-        if (row.style.display !== 'none') {
-            if (visibleCount < value) {
-                row.style.display = '';
-                visibleCount++;
-            } else {
-                row.style.display = 'none';
-            }
+        if (index < limit) {
+            row.style.display = '';
         }
     });
 }
+
     </script>
 </body>
 </html>
