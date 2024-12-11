@@ -35,7 +35,7 @@ try {
     /* Umum */
     /* Umum */
 body {
-    font-family: 'Arial', sans-serif;
+    font-family: 'Roboto', 'Arial', sans-serif;
     margin: 0;
     padding: 0;
     background-color: #f4f4f4;
@@ -50,7 +50,7 @@ body {
     padding: 40px;
     background-color: #fff;
     border-radius: 25px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
     max-width: 1100px;
     width: calc(100% - 270px); /* Mengurangi lebar konten agar ada jarak dengan sidebar */
     display: block;
@@ -61,34 +61,42 @@ body {
 
 /* Judul Halaman */
 h1 {
-    color: maroon;
+    color: #800000;
     text-align: center;
     font-size: 32px;
     margin-top: 25px;
+    border-bottom: 3px solid #800000;
+    padding-bottom: 10px;
 }
 
 /* Tabel */
 table {
     width: 100%;
     margin: 20px auto;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
     background-color: white;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+    border-radius: 15px;
     overflow: hidden;
-    box-sizing: border-box;
 }
 
+thead {
+    background-color: #800000;
+    color: white;
+}
+
+
 th, td {
-    padding: 12px;
+    padding: 15px;
     text-align: center;
     border-bottom: 1px solid #ddd;
 }
 
 th {
-    background-color: maroon;
-    color: white;
     text-transform: uppercase;
+    font-weight: bold;
+    letter-spacing: 1px;
 }
 
 tr:nth-child(even) {
@@ -96,29 +104,41 @@ tr:nth-child(even) {
 }
 
 tr:hover {
-    background-color: #ffe6e6;
+    background-color: #f1f1f1;
+    transition: background-color 0.3s ease;
 }
 
 /* Tombol Detail */
 .btn-detail {
-    background-color: maroon;
+    background-color: #800000;
     color: white;
     border: none;
-    padding: 8px 16px;
+    padding: 10px 15px;
     cursor: pointer;
     font-weight: bold;
-    border-radius: 4px;
-    transition: background-color 0.3s ease;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    gap: 8px;
 }
 
 .btn-detail:hover {
-    background-color: darkred;
+    background-color: #600000;
+    transform: scale(1.05);
+}
+
+.btn-detail i {
+    margin-right: 5px;
 }
 
 .no-data {
     text-align: center;
-    color: maroon;
+    color: #800000;
     font-size: 18px;
+    padding: 20px;
 }
 
 /* Responsif untuk layar kecil */
@@ -143,7 +163,8 @@ tr:hover {
     }
 
     th, td {
-        font-size: 14px; /* Ukuran font untuk perangkat kecil */
+        padding: 10px;
+        font-size: 14px;
     }
 
     .btn-detail {
@@ -188,7 +209,11 @@ tr:hover {
                         <td><?= htmlspecialchars($row['invoice']); ?></td>
                         <td><?= htmlspecialchars($row['tanggal_input']); ?></td>
                         <td><?= htmlspecialchars($row['total']); ?></td>
-                        <td><button class="btn-detail" onclick="window.location.href='detail_transaksi.php?id=<?= htmlspecialchars($row['id_penjualan']); ?>'">Lihat Detail</button></td>
+                        <td>
+    <button class="btn-detail" onclick="window.location.href='detail_transaksi.php?id=<?= htmlspecialchars($row['id_penjualan']); ?>'">
+        <i class="fas fa-eye"></i> Lihat Detail
+    </button>
+</td>
                     </tr>
                     <?php endforeach; ?>
                 <?php else: ?>
