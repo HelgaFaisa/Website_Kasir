@@ -176,16 +176,137 @@ header {
 
 /* Kasir Section */
 .kasir-section {
-    background-color: #fff;
+    flex: 1;
+    background: #f9f9f9;
+    border-radius: 20px; /* Ujung melengkung */
     padding: 20px;
-    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Tambahkan bayangan */
 }
 
-.kasir-header h4 {
-    font-size: 24px;
+.kasir-section h4 {
+    font-size: 22px;
     color: #800000;
-    border-bottom: 2px solid #800000;
+    border-bottom: 3px solid #800000; /* Garis bawah lebih tebal */
+    padding-bottom: 8px;
+    text-align: center;
+}
+
+.kasir-section:hover {
+    transform: translateY(-5px); /* Efek hover: naik sedikit */
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15); /* Perbesar bayangan */
+}
+
+
+.kasir-header h4 {
+    font-size: 26px;
+    color: #800000;
+    border-bottom: 3px solid #800000; /* Garis bawah lebih tebal */
     padding-bottom: 10px;
+    text-align: center;
+}
+
+.kasir-input {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.kasir-input input, .kasir-input select {
+    width: 95%; /* Ukuran input */
+    max-width: 700px;
+    padding: 12px;
+    font-size: 16px;
+    border: 2px solid #ccc;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1); /* Tambahkan bayangan dalam */
+}
+
+.kasir-input input:focus, .kasir-input select:focus {
+    outline: none;
+    border-color: #800000; /* Warna saat fokus */
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15), 0 0 8px rgba(128, 0, 0, 0.5); /* Efek glow saat fokus */
+}
+
+.kasir-input input:hover, .kasir-input select:hover {
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15), 0 0 5px rgba(128, 0, 0, 0.3); /* Efek glow saat hover */
+}
+
+/* Tombol di Kasir */
+.kasir-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+.kasir-buttons .btn-primary {
+    background-color: #800000;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    font-size: 16px;
+    border-radius: 20px; /* Tombol ujung melengkung */
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.kasir-buttons .btn-primary:hover {
+    background-color: #5a0000;
+    box-shadow: 0 4px 8px rgba(128, 0, 0, 0.3); /* Tambahkan bayangan hover */
+}
+
+/* Tabel Kasir */
+.kasir-table {
+    width: 100%;
+    border-collapse: separate; /* Tetap menggunakan separate untuk border-radius */
+    border-spacing: 0; /* Pastikan tidak ada jarak antar sel */
+    margin-top: 15px;
+    border: 1px solid #800000;
+    border-radius: 10px; /* Tepi tabel melengkung */
+    overflow: hidden; /* Pastikan radius diterapkan dengan baik */
+}
+
+.kasir-table th:first-child {
+    border-top-left-radius: 10px; /* Ujung kiri atas */
+}
+
+.kasir-table th:last-child {
+    border-top-right-radius: 10px; /* Ujung kanan atas */
+}
+
+.kasir-table th, .kasir-table td {
+    padding: 12px;
+    border: 1px solid #800000;
+    text-align: center;
+    font-size: 16px;
+}
+
+.kasir-table th {
+    background-color: #800000;
+    color: white;
+    font-size: 18px;
+    padding: 12px;
+    text-align: center;
+}
+
+
+.kasir-table tr:last-child td:first-child {
+    border-bottom-left-radius: 10px; /* Ujung kiri bawah */
+}
+
+.kasir-table tr:last-child td:last-child {
+    border-bottom-right-radius: 10px; /* Ujung kanan bawah */
+}
+
+.kasir-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.kasir-table tr:hover {
+    background-color: #f1f1f1;
 }
 
 
@@ -267,9 +388,28 @@ header {
 
 #cart-items {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
     margin-top: 10px;
     border: 2px solid #800000;
+    border-radius: 10px; /* Tambahkan ini */
+    overflow: hidden; /* Tambahkan ini */
+}
+
+#cart-items th:first-child {
+    border-top-left-radius: 10px;
+}
+
+#cart-items th:last-child {
+    border-top-right-radius: 10px;
+}
+
+#cart-items tr:last-child td:first-child {
+    border-bottom-left-radius: 10px;
+}
+
+#cart-items tr:last-child td:last-child {
+    border-bottom-right-radius: 10px;
 }
 
 #cart-items th, #cart-items td {
