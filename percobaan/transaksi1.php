@@ -23,6 +23,34 @@ try {
 } catch (Exception $e) {
     die("Error: " . $e->getMessage());
 }
+// Inisialisasi variabel $searchKeyword
+$searchKeyword = isset($_GET['search']) ? $_GET['search'] : '';
+
+try {
+    // Query untuk mengambil data transaksi dengan filter pencarian
+    $sql = "SELECT id_penjualan, invoice, tanggal_input, total FROM penjualan";
+    
+    if (!empty($searchKeyword)) {
+        $sql .= " WHERE invoice LIKE ? OR tanggal_input LIKE ?";
+    }
+
+    $sql .= " ORDER BY tanggal_input ASC";
+    $stmt = prepareQuery($sql); // Menggunakan fungsi dari config.php
+
+    if ($stmt) {
+        if (!empty($searchKeyword)) {
+            $likeKeyword = '%' . $searchKeyword . '%';
+            $stmt->bind_param('ss', $likeKeyword, $likeKeyword);
+        }
+        $stmt->execute();
+        $result = $stmt->get_result(); // Mendapatkan hasil query
+        $transaksi = $result->fetch_all(MYSQLI_ASSOC); // Mengambil data dalam format asosiatif
+    } else {
+        $transaksi = []; // Jika query gagal
+    }
+} catch (Exception $e) {
+    die("Error: " . $e->getMessage());
+}
 ?>
 
 <!DOCTYPE html>
@@ -182,6 +210,40 @@ tr:hover {
         width: 20%; /* Menyesuaikan lebar kolom total */
     }
 }
+.search-container {
+    margin-bottom: 20px;
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    margin: 20px auto;
+}
+
+.search-container i {
+    position: absolute;
+    top: 50%;
+    left: 10px;
+    transform: translateY(-50%);
+    color: #800000;
+    font-size: 18px;
+}
+
+.search-container input {
+    width: 100%;
+    padding: 10px 10px 10px 35px; /* Ruang untuk ikon di sisi kiri */
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.search-container input:focus {
+    border-color: #800000;
+    outline: none;
+    box-shadow: 0 4px 12px rgba(128, 0, 0, 0.2);
+}
+
+
 
 </style>
 </head>
@@ -190,6 +252,11 @@ tr:hover {
     <!-- Konten Utama -->
     <div class="content">
     <h1><i class="fas fa-list"></i> Daftar Transaksi</h1>
+
+    <div class="search-container">
+    <i class="fas fa-search"></i>
+    <input type="text" placeholder="Cari data..." onkeyup="searchTable(this.value)">
+</div>
         <table>
             <thead>
                 <tr>
@@ -224,5 +291,28 @@ tr:hover {
             </tbody>
         </table>
     </div>
+
+    <script>
+    function searchTable(keyword) {
+    const table = document.getElementById("dataTable");
+    const rows = table.getElementsByTagName("tr");
+    const lowerKeyword = keyword.toLowerCase();
+
+    for (let i = 1; i < rows.length; i++) { // Mulai dari 1 untuk melewati header
+        const cells = rows[i].getElementsByTagName("td");
+        let found = false;
+
+        for (let j = 0; j < cells.length; j++) {
+            if (cells[j].textContent.toLowerCase().includes(lowerKeyword)) {
+                found = true;
+                break;
+            }
+        }
+
+        rows[i].style.display = found ? "" : "none";
+    }
+}
+
+</script>
 </body>
 </html>
