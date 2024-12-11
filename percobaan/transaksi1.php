@@ -189,7 +189,7 @@ tr:hover {
 <?php include('sidebar.php'); ?>
     <!-- Konten Utama -->
     <div class="content">
-        <h1>Daftar Transaksi</h1>
+    <h1><i class="fas fa-list"></i> Daftar Transaksi</h1>
         <table>
             <thead>
                 <tr>

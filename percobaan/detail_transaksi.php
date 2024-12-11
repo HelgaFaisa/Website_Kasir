@@ -199,35 +199,35 @@ tr:hover {
             </tr>
         </thead>
         <tbody>
-            <tr>
-                <td><strong>Invoice</strong></td>
+        <tr>
+                <td><i class="fas fa-barcode"></i><strong>  Invoice</strong></td>
                 <td><?= htmlspecialchars($transaksi['invoice']); ?></td>
             </tr>
             <tr>
-                <td><strong>Tanggal</strong></td>
+                <td><i class="fas fa-calendar-alt"></i><strong>  Tanggal</strong></td>
                 <td><?= htmlspecialchars($transaksi['tanggal_input']); ?></td>
             </tr>
             <tr>
-                <td><strong>Diskon</strong></td>
+                <td><i class="fas fa-percent"></i><strong>  Diskon</strong></td>
                 <td><?= htmlspecialchars($transaksi['diskon']); ?></td>
             </tr>
             <tr>
-                <td><strong>Total Bayar</strong></td>
+                <td><i class="fas fa-money-bill-wave"></i><strong>  Total Bayar</strong></td>
                 <td><?= htmlspecialchars($transaksi['total']); ?></td>
             </tr>
             <tr>
-                <td><strong>Bayar</strong></td>
+                <td><i class="fas fa-credit-card"></i><strong>  Bayar</strong></td>
                 <td><?= htmlspecialchars($transaksi['bayar']); ?></td>
             </tr>
             <tr>
-                <td><strong>Kembalian</strong></td>
+                <td><i class="fas fa-coins"></i><strong>  Kembalian</strong></td>
                 <td><?= htmlspecialchars($transaksi['kembali']); ?></td>
             </tr>
         </tbody>
     </table>
     
     <!-- Detail Barang -->
-    <h2>Detail Barang</h2>
+    <h2><i class="fas fa-shopping-basket"></i> Detail Barang</h2>
     <table>
         <thead>
             <tr>
@@ -249,14 +249,16 @@ tr:hover {
                 <?php endforeach; ?>
             <?php else: ?>
                 <tr>
-                    <td colspan="4" class="no-data">Tidak ada detail barang untuk transaksi ini.</td>
+                    <td colspan="4" class="no-data"><i class="fas fa-exclamation-triangle"></i> Tidak ada detail barang untuk transaksi ini.</td>
                 </tr>
             <?php endif; ?>
         </tbody>
     </table>
     
     <!-- Tombol Kembali -->
-    <button class="back-button" onclick="goBack()">Kembali ke Daftar Transaksi</button>
+    <button class="back-button" onclick="goBack()">
+        <i class="fas fa-arrow-left"></i> Kembali
+    </button>
 </div>
 
 <script>
