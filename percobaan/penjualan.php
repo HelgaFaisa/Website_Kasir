@@ -188,46 +188,53 @@ header {
     padding-bottom: 10px;
 }
 
+
 /* Search Section */
 .search-section {
     flex: 1;
-    background: #f4f4f4;
-    border-radius: 6px;
-    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 10px; /* Ujung lebih melengkung */
+    padding: 20px;
     margin-bottom: 20px;
-
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Tambahan bayangan */
 }
 
 .search-section h4 {
-    font-size: 20px;
+    font-size: 22px;
     color: #800000;
-    border-bottom: 2px solid #800000; /* Garis bawah */
+    border-bottom: 3px solid #800000; /* Garis bawah lebih tebal */
+    padding-bottom: 8px;
 }
 
 #searchInput {
     width: 95%;
     max-width: 700px;
-    padding: 10px;
+    padding: 12px;
     font-size: 16px;
-    border: 1px solid #ccc;
-    border-radius: 10px;
+    border: 2px solid #ccc;
+    border-radius: 20px;
     margin-top: 10px;
+    transition: all 0.3s ease; /* Efek transisi */
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1); /* Tambahkan bayangan dalam */
 }
 
 #searchInput:focus {
     outline: none;
-    border-color: #800000;
+    border-color: #800000; /* Warna saat fokus */
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15), 0 0 8px rgba(128, 0, 0, 0.5); /* Efek glow saat fokus */
 }
 
 #searchResults table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 10px;
+    margin-top: 15px;
     border: 2px solid #800000;
+    border-radius: 10px; /* Ujung tabel melengkung */
+    overflow: hidden; /* Untuk efek border-radius */
 }
 
 #searchResults th, #searchResults td {
-    padding: 10px;
+    padding: 12px;
     border: 1px solid #800000;
     text-align: center;
 }
@@ -235,6 +242,7 @@ header {
 #searchResults th {
     background-color: #800000;
     color: white;
+    font-size: 16px;
 }
 
 #searchResults tr:nth-child(even) {
@@ -243,6 +251,10 @@ header {
 
 #searchResults tr:hover {
     background-color: #f1f1f1;
+}
+
+#searchInput:hover {
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15), 0 0 5px rgba(128, 0, 0, 0.3); /* Efek glow saat hover */
 }
 
 /* Cart Section */
