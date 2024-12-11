@@ -36,87 +36,124 @@ if (isset($_GET['ajax'])) {
        /* Styling dasar */
        body {
             font-family: Arial, sans-serif;
-            background-color: #f0f2f5;
+            background-color: #f4f6f9;
             margin: 0;
             padding: 0;
+            line-height: 1.6;
         }
         .main-content {
             margin-left: 250px;
             padding: 20px;
         }
         .page-title {
-            color: #800000;
-            font-size: 24px;
+            color: #2c3e50;
+            font-size: 26px;
             font-weight: bold;
             margin: 0;
             padding: 20px 0;
+            border-bottom: 2px solid #800000;
         }
         .report-section {
             background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
         }
         .filter-section {
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
         }
         .filter-section label {
             margin-right: 10px;
         }
         .date-input {
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            width: 160px;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            width: 180px;
             font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+        .date-input:focus {
+            outline: none;
+            border-color: #800000;
+            box-shadow: 0 0 5px rgba(128, 0, 0, 0.3);
         }
         .button-container {
             display: flex;
-            gap: 10px;
+            gap: 15px;
         }
         .icon-button-box {
-            width: 40px;
-            height: 40px;
+            width: 45px;
+            height: 45px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
             color: white;
-            font-size: 18px;
-            transition: transform 0.2s, background-color 0.2s;
+            font-size: 20px;
+            transition: transform 0.3s, box-shadow 0.3s;
         }
-        .show-button-box { background-color: #007bff; }
-        .print-button-box { background-color: #28a745; }
-        .export-button-box { background-color: #ffc107; }
-        .icon-button-box:hover {
-            transform: scale(1.1);
-            opacity: 0.9;
-        }
+        .show-button-box { 
+    background-color: #007bff; 
+    box-shadow: 0 3px 6px rgba(0, 123, 255, 0.3);
+}
+.print-button-box { 
+    background-color: #28a745; 
+    box-shadow: 0 3px 6px rgba(40, 167, 69, 0.3);
+}
+.export-button-box { 
+    background-color: #ffc107; 
+    box-shadow: 0 3px 6px rgba(255, 193, 7, 0.3);
+}
+.icon-button-box:hover {
+    transform: scale(1.1) rotate(3deg);
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+}
         table {
             width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 20px;
+    overflow: hidden;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
         th {
             background-color: #800000;
-            color: white;
-            padding: 12px;
-            text-align: left;
+    color: white;
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
         }
         td {
-            padding: 12px;
-            border-bottom: 1px solid #ddd;
+            padding: 15px;
+    border-bottom: 1px solid #e9ecef;
+    background-color: #ffffff;
         }
-        .table-controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 20px 0;
-        }
+        tbody tr:last-child td {
+    border-bottom: none;
+}
+tbody tr:hover {
+    background-color: #f1f3f5;
+    transition: background-color 0.3s ease;
+}
+.table-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 20px 0;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
     </style>
 </head>
 <body>
