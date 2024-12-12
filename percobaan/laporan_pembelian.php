@@ -35,115 +35,225 @@ if (isset($_GET['ajax'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Laporan Pembelian</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
         /* Styling dasar */
         body {
             font-family: Arial, sans-serif;
-            background-color: #f0f2f5;
+            background-color: #f4f6f9;
             margin: 0;
             padding: 0;
+            line-height: 1.6;
         }
         .main-content {
             margin-left: 250px;
             padding: 20px;
         }
-        .page-title {
-            color: #800000;
-            font-size: 24px;
-            font-weight: bold;
-            margin: 0;
-            padding: 20px 0;
-        }
         .report-section {
             background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+        .report-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #800000;
+        }
+        .report-title {
+            color: #800000;
+            font-size: 26px;
+            font-weight: bold;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        .report-title i {
+            margin-right: 15px;
+            color: #800000;
         }
         .filter-section {
             display: flex;
             align-items: center;
-            gap: 20px;
-            margin-bottom: 20px;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .date-filter {
+            display: flex;
+            align-items: center;
+        }
+        .date-filter label {
+            margin-right: 10px;
         }
         .date-input {
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            width: 160px;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            width: 180px;
             font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+        .date-input:focus {
+            outline: none;
+            border-color: #800000;
+            box-shadow: 0 0 5px rgba(128, 0, 0, 0.3);
         }
         .button-container {
             display: flex;
-            gap: 10px;
+            gap: 15px;
+            margin-left: 20px;
         }
         .icon-button-box {
-            width: 50px;
-            height: 50px;
+            width: 45px;
+            height: 45px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
             color: white;
             font-size: 20px;
-            transition: transform 0.2s, background-color 0.2s;
+            transition: transform 0.3s, box-shadow 0.3s;
         }
-        .show-button-box { background-color: #007bff; }
-        .print-button-box { background-color: #28a745; }
-        .export-button-box { background-color: #ffc107; }
+        .show-button-box { 
+            background-color: #007bff; 
+            box-shadow: 0 3px 6px rgba(0, 123, 255, 0.3);
+        }
+        .print-button-box { 
+            background-color: #28a745; 
+            box-shadow: 0 3px 6px rgba(40, 167, 69, 0.3);
+        }
+        .export-button-box { 
+            background-color: #ffc107; 
+            box-shadow: 0 3px 6px rgba(255, 193, 7, 0.3);
+        }
         .icon-button-box:hover {
-            transform: scale(1.1);
-            opacity: 0.9;
+            transform: scale(1.1) rotate(3deg);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
         }
         table {
             width: 100%;
-            border-collapse: collapse;
+            border-collapse: separate;
+            border-spacing: 0;
             margin-top: 20px;
+            overflow: hidden;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         th {
             background-color: #800000;
             color: white;
-            padding: 12px;
+            padding: 15px;
             text-align: left;
+            font-weight: 600;
         }
         td {
-            padding: 12px;
-            border-bottom: 1px solid #ddd;
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+            background-color: #ffffff;
+        }
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+        tbody tr:hover {
+            background-color: #f1f3f5;
+            transition: background-color 0.3s ease;
         }
         .table-controls {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        .table-controls select {
+            padding: 6px;
+            margin: 0 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+        }
+        .search-container {
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        .search-container i {
+            position: absolute;
+            left: 10px;
+            color: #800000;
+            z-index: 1;
+        }
+        .search-container input {
+            padding: 8px 8px 8px 35px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            width: 250px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        .search-container input:focus {
+            outline: none;
+            border-color: #800000;
+            box-shadow: 0 0 5px rgba(128, 0, 0, 0.3);
+        }
+        @media (max-width: 768px) {
+            .filter-section {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            .date-filter {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+                width: 100%;
+            }
+            .button-container {
+                margin-left: 0;
+                width: 100%;
+                justify-content: flex-start;
+            }
         }
     </style>
 </head>
 <body>
     <?php include('sidebar.php'); ?>
+
     <div class="main-content">
-        <h1 class="page-title">Laporan Pembelian</h1>
         <div class="report-section">
+            <div class="report-header">
+                <h1 class="report-title"><i class="fas fa-shopping-cart"></i> Laporan Pembelian</h1>
+            </div>
             <div class="filter-section">
-                <div>
+                <div class="date-filter">
                     <label>Periode Tanggal</label>
                     <input type="date" class="date-input" name="start_date" value="<?= $start_date ?>">
                     s/d
                     <input type="date" class="date-input" name="end_date" value="<?= $end_date ?>">
-                </div>
-                <div class="button-container">
-                    <div class="icon-button-box show-button-box" onclick="filterData()" title="Tampilkan">
-                        <i class="fas fa-eye"></i>
-                    </div>
-                    <div class="icon-button-box print-button-box" onclick="printPDF()" title="Cetak Laporan">
-                        <i class="fas fa-print"></i>
-                    </div>
-                    <div class="icon-button-box export-button-box" onclick="exportExcel()" title="Export ke Excel">
-                        <i class="fas fa-file-excel"></i>
+                    <div class="button-container">
+                        <div class="icon-button-box show-button-box" onclick="filterData()" title="Tampilkan">
+                            <i class="fas fa-eye"></i>
+                        </div>
+                        <div class="icon-button-box print-button-box" onclick="printPDF()" title="Cetak Laporan">
+                            <i class="fas fa-print"></i>
+                        </div>
+                        <div class="icon-button-box export-button-box" onclick="exportExcel()" title="Export ke Excel">
+                            <i class="fas fa-file-excel"></i>
+                        </div>
                     </div>
                 </div>
             </div>
+
+
             <div class="table-controls">
                 <div>
                     Show 
@@ -154,10 +264,12 @@ if (isset($_GET['ajax'])) {
                     </select>
                     entries
                 </div>
-                <div>
-                    Search: <input type="text" onkeyup="searchTable(this.value)">
+                <div class="search-container"> 
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Cari data..." onkeyup="searchTable(this.value)">
                 </div>
             </div>
+
             <table id="reportTable">
                 <thead>
                     <tr>
@@ -214,7 +326,7 @@ if (isset($_GET['ajax'])) {
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td>${index + 1}</td>
-                        <td>${restock.tanggal_restock}</td>
+                        <td>${escapeHtml(restock.tanggal_restock)}</td>
                         <td>${escapeHtml(restock.nama_supplier)}</td>
                         <td>${escapeHtml(restock.nama_barang)}</td>
                         <td>${escapeHtml(restock.jumlah)}</td>
@@ -252,15 +364,36 @@ if (isset($_GET['ajax'])) {
 
         function searchTable(query) {
             const rows = document.querySelectorAll('#reportTable tbody tr');
+            let visibleCount = 0;
+            
             rows.forEach(row => {
                 const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(query.toLowerCase()) ? '' : 'none';
+                if (text.includes(query.toLowerCase())) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
             });
         }
 
         function changeEntries(value) {
-            console.log('Showing', value, 'entries per page');
-            // Implement pagination logic here
+            const rows = document.querySelectorAll('#reportTable tbody tr');
+            
+            // Ubah nilai menjadi angka
+            const limit = parseInt(value, 10);
+            
+            // Reset semua baris menjadi tersembunyi
+            rows.forEach(row => {
+                row.style.display = 'none';
+            });
+
+            // Tampilkan baris hingga batas yang dipilih
+            rows.forEach((row, index) => {
+                if (index < limit) {
+                    row.style.display = '';
+                }
+            });
         }
     </script>
 </body>

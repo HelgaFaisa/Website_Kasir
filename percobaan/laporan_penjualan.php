@@ -33,8 +33,8 @@ if (isset($_GET['ajax'])) {
     <title>Laporan Penjualan</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
-       /* Styling dasar */
-       body {
+        /* Styling dasar */
+        body {
             font-family: Arial, sans-serif;
             background-color: #f4f6f9;
             margin: 0;
@@ -69,8 +69,14 @@ if (isset($_GET['ajax'])) {
             padding: 15px;
             border-radius: 8px;
         }
+        .date-filter {
+            display: flex;
+            align-items: center;
+            gap: 10px; /* Tambahkan jarak antara elemen */
+        }
         .filter-section label {
             margin-right: 10px;
+            white-space: nowrap; /* Mencegah label pindah ke baris baru */
         }
         .date-input {
             padding: 10px;
@@ -85,9 +91,15 @@ if (isset($_GET['ajax'])) {
             border-color: #800000;
             box-shadow: 0 0 5px rgba(128, 0, 0, 0.3);
         }
+        .date-filter-container {
+            display: flex; /* Ubah display menjadi flex */
+            align-items: center; /* Sejajarkan vertikal */
+            gap: 10px; /* Tambahkan jarak antara elemen */
+        }
         .button-container {
             display: flex;
-            gap: 15px;
+            gap: 10px;
+            align-items: center; /* Sejajarkan vertikal */
         }
         .icon-button-box {
             width: 45px;
@@ -102,133 +114,151 @@ if (isset($_GET['ajax'])) {
             transition: transform 0.3s, box-shadow 0.3s;
         }
         .show-button-box { 
-    background-color: #007bff; 
-    box-shadow: 0 3px 6px rgba(0, 123, 255, 0.3);
-}
-.print-button-box { 
-    background-color: #28a745; 
-    box-shadow: 0 3px 6px rgba(40, 167, 69, 0.3);
-}
-.export-button-box { 
-    background-color: #ffc107; 
-    box-shadow: 0 3px 6px rgba(255, 193, 7, 0.3);
-}
-.icon-button-box:hover {
-    transform: scale(1.1) rotate(3deg);
-    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
-}
+            background-color: #007bff; 
+            box-shadow: 0 3px 6px rgba(0, 123, 255, 0.3);
+        }
+        .print-button-box { 
+            background-color: #28a745; 
+            box-shadow: 0 3px 6px rgba(40, 167, 69, 0.3);
+        }
+        .export-button-box { 
+            background-color: #ffc107; 
+            box-shadow: 0 3px 6px rgba(255, 193, 7, 0.3);
+        }
+        .icon-button-box:hover {
+            transform: scale(1.1) rotate(3deg);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+        }
+        .report-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #800000;
+        }
+        .report-title {
+            color: #800000;
+            font-size: 26px;
+            font-weight: bold;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        .report-title i {
+            margin-right: 15px;
+            color: #800000;
+        }
         table {
             width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    margin-top: 20px;
-    overflow: hidden;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 20px;
+            overflow: hidden;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
         th {
             background-color: #800000;
-    color: white;
-    padding: 15px;
-    text-align: left;
-    font-weight: 600;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
         }
         td {
             padding: 15px;
-    border-bottom: 1px solid #e9ecef;
-    background-color: #ffffff;
+            border-bottom: 1px solid #e9ecef;
+            background-color: #ffffff;
         }
         tbody tr:last-child td {
-    border-bottom: none;
-}
-tbody tr:hover {
-    background-color: #f1f3f5;
-    transition: background-color 0.3s ease;
-}
-.table-controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin: 20px 0;
-    padding: 10px;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-}
-
-.report-header {
-        display: flex;
-        align-items: center;
-        margin-bottom: 20px;
-        padding-bottom: 15px;
-        border-bottom: 2px solid #800000;
-    }
-    .report-title {
-        color: #800000; /* Dark red color */
-        font-size: 26px;
-        font-weight: bold;
-        margin: 0;
-        display: flex;
-        align-items: center;
-        position: relative;
-    }
-    .report-title i {
-        margin-right: 15px;
-        color: #800000;
-    }
-    
-    /* Improve search container styling */
-    .search-container {
-        display: flex;
-        align-items: center;
-        position: relative;
-    }
-    .search-container i {
-        position: absolute;
-        left: 10px;
-        color: #800000;
-        z-index: 1;
-    }
-    .search-container input {
-        padding: 8px 8px 8px 35px;
-        border: 1px solid #ced4da;
-        border-radius: 6px;
-        width: 250px;
-        font-size: 14px;
-        transition: all 0.3s ease;
-    }
-    .search-container input:focus {
-        outline: none;
-        border-color: #800000;
-        box-shadow: 0 0 5px rgba(128, 0, 0, 0.3);
-    }
-    /* Improve table controls */
-    .table-controls {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin: 20px 0;
-        padding: 15px;
-        background-color: #f8f9fa;
-        border-radius: 8px;
-    }
-    .table-controls select {
-        padding: 6px;
-        margin: 0 10px;
-        border: 1px solid #ced4da;
-        border-radius: 4px;
-    }
-     /* Responsive adjustments */
-     @media (max-width: 768px) {
-        .filter-section {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 15px;
+            border-bottom: none;
         }
-        .button-container {
-            width: 100%;
+        tbody tr:hover {
+            background-color: #f1f3f5;
+            transition: background-color 0.3s ease;
+        }
+        .table-controls {
+            display: flex;
             justify-content: space-between;
+            align-items: center;
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
         }
-    }
+        .report-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #800000;
+        }
+        .report-title {
+            color: #800000;
+            font-size: 26px;
+            font-weight: bold;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        .report-title i {
+            margin-right: 15px;
+            color: #800000;
+        }
+        .search-container {
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        .search-container i {
+            position: absolute;
+            left: 10px;
+            color: #800000;
+            z-index: 1;
+        }
+        .search-container input {
+            padding: 8px 8px 8px 35px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            width: 250px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        .search-container input:focus {
+            outline: none;
+            border-color: #800000;
+            box-shadow: 0 0 5px rgba(128, 0, 0, 0.3);
+        }
+        .table-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        .table-controls select {
+            padding: 6px;
+            margin: 0 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+        }
+        /* Media Query untuk responsivitas */
+        @media (max-width: 768px) {
+            .date-filter-container {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            .button-container {
+                width: 100%;
+                margin-top: 10px;
+                justify-content: flex-start;
+            }
+        
+        }
     </style>
 </head>
 <body>
@@ -243,22 +273,22 @@ tbody tr:hover {
         <div class="report-header">
             <h1 class="report-title"><i class="fas fa-chart-line"></i> Laporan Penjualan</h1>
         </div>
-            <div class="filter-section">
-                <div>
+        <div class="filter-section">
+                <div class="date-filter-container">
                     <label>Periode Tanggal</label>
                     <input type="date" class="date-input" name="start_date" value="<?= $start_date ?>">
-                    s/d
+                    <span>s/d</span>
                     <input type="date" class="date-input" name="end_date" value="<?= $end_date ?>">
-                </div>
-                <div class="button-container">
-                    <div class="icon-button-box show-button-box" onclick="filterData()" title="Tampilkan">
-                        <i class="fas fa-eye"></i>
-                    </div>
-                    <div class="icon-button-box print-button-box" onclick="printPDF()" title="Cetak Laporan">
-                        <i class="fas fa-print"></i>
-                    </div>
-                    <div class="icon-button-box export-button-box" onclick="exportExcel()" title="Export ke Excel">
-                        <i class="fas fa-file-excel"></i>
+                    <div class="button-container">
+                        <div class="icon-button-box show-button-box" onclick="filterData()" title="Tampilkan">
+                            <i class="fas fa-eye"></i>
+                        </div>
+                        <div class="icon-button-box print-button-box" onclick="printPDF()" title="Cetak Laporan">
+                            <i class="fas fa-print"></i>
+                        </div>
+                        <div class="icon-button-box export-button-box" onclick="exportExcel()" title="Export ke Excel">
+                            <i class="fas fa-file-excel"></i>
+                        </div>
                     </div>
                 </div>
             </div>
