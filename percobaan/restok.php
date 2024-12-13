@@ -109,7 +109,7 @@ if (!empty($search)) {
         <div class="top-actions">
             <!-- Tombol untuk membuka modal tambah -->
             <button class="btn-add" onclick="openAddForm()">
-                <i class="fas fa-plus"></i> Tambah Data Restock
+                <i class="fas fa-plus"></i> 
             </button>
 
             <!-- Form Pencarian -->

@@ -303,7 +303,7 @@ if (!empty($search)) {
 
         <div class="top-actions">
             <button class="btn-add" onclick="openAddForm()">
-                <i class="fas fa-plus"></i> Tambah Data Pengembalian
+                <i class="fas fa-plus"></i> 
             </button>
 
             <div class="search-bar">
