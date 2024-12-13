@@ -484,6 +484,14 @@ header {
     background-color: #800000;
     color: white;
 }
+.btn-success.add-to-cart {
+    background-color: #800000; /* Warna merah */
+    color: white;
+}
+
+.btn-success.add-to-cart:hover {
+    background-color: #800000; /* Warna merah lebih gelap saat hover */
+}
 
 /* Modal Styles */
 .modal {
