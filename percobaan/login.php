@@ -34,9 +34,9 @@ if(isset($_POST['login'])){
                 $aktivitas = "Login berhasil";
 
                 // Menyimpan aktivitas login ke log_aktivitas
-                // $log_stmt = $config->prepare("INSERT INTO log_aktivitas (id_pengguna, aktivitas, ip_address) VALUES (?, ?, ?)");
-                // $log_stmt->bind_param("iss", $id_pengguna, $aktivitas, $ip_address);
-                // $log_stmt->execute();
+                $log_stmt = $config->prepare("INSERT INTO log_aktivitas (id_pengguna, aktivitas, ip_address) VALUES (?, ?, ?)");
+                $log_stmt->bind_param("iss", $id_pengguna, $aktivitas, $ip_address);
+                $log_stmt->execute();
 
                 header("location:index.php"); // Redirect ke index.php setelah login berhasil
                 exit;
