@@ -1,4 +1,4 @@
-/* Global Styling */
+Global Styling
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
@@ -163,6 +163,7 @@ tr:hover {
     transform: translateY(-2px);
     opacity: 0.8;
 }
+
 /* Modal Styling */
 .modal {
     display: none;
