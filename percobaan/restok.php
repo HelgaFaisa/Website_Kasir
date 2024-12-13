@@ -107,6 +107,7 @@ if (!empty($search)) {
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         Global Styling
+/* Global Styling */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
@@ -211,6 +212,7 @@ table {
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     margin-top: 20px;
+    overflow: hidden;  /* Menambahkan properti overflow untuk memastikan sudut melengkung penuh */
 }
 
 th {
@@ -224,6 +226,7 @@ th {
 td {
     padding: 12px 15px;
     border-bottom: 1px solid #eee;
+    border-radius: 8px;  /* Menambahkan border-radius pada setiap cell */
 }
 
 tr:hover {
