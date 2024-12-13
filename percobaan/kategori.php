@@ -114,14 +114,20 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
             <input type="hidden" id="id_kategori" name="id_kategori">
             <input type="hidden" id="kode_kategori" name="kode_kategori" placeholder="Kode Kategori" required>
             <input type="text" id="nama_kategori" name="nama_kategori" placeholder="Masukan kategori barang baru" required>
-            <button type="submit" id="submitBtn" name="submit" class="button btn-add">Insert</button>
-            <button type="submit" id="updateBtn" name="update" class="button btn-update" style="display:none;">Update</button>
+            <button type="submit" id="submitBtn" name="submit" class="button btn-add">
+            <i class="fas fa-plus"></i> <!-- Font Awesome plus icon -->
+        </button>
+        <button type="submit" id="updateBtn" name="update" class="button btn-update" style="display:none;">
+            <i class="fas fa-pen"></i> <!-- Font Awesome pencil icon for Update -->
+        </button>
         </form>
 
         <!-- Search Form -->
         <form method="GET" action="kategori.php" class="search-form">
             <input type="text" name="search" placeholder="Search" value="<?= htmlspecialchars($search_term); ?>">
-            <button type="submit" class="button btn-update">Search</button>
+            <button type="submit" class="button btn-update">
+            <i class="fas fa-search"></i> <!-- Search icon -->
+        </button>
         </form>
 
         <table>

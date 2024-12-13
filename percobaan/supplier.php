@@ -107,12 +107,15 @@ $supplier_result = $config->query($supplier_query);
 
     <div class="container">
         <h1>Data Supplier</h1>
-        <button id="openModal" class="button btn-add">Tambah Supplier</button>
-
+        <button id="openModal" class="button btn-add">
+        <i class="fas fa-plus"></i> <!-- Ikon Plus dari Font Awesome -->
+    </button>
         <form method="GET" action="supplier.php" class="search-form" id="supplierSearchForm">
             <input type="text" name="search" placeholder="Cari Supplier" id="supplierSearchInput" value="<?= htmlspecialchars($_GET['search'] ?? ''); ?>">
-            <button type="submit" class="button btn-update">Search</button>
-        </form>
+            <button type="submit" class="button btn-update">
+            <i class="fas fa-search"></i> <!-- Ikon Search dari Font Awesome -->
+        </button>        
+    </form>
 
         <table>
             <tr>
