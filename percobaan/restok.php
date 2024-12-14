@@ -95,8 +95,322 @@ if (!empty($search)) {
     <title>Restock Barang - Toko Baju</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="style/restock.css" rel="stylesheet" type="text/css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- <link href="style/restock.css" rel="stylesheet" type="text/css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> -->
+    <style>
+        /* Global Styling */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f6f9;
+}
+
+h1 {
+    color: #2c3e50;
+    font-size: 24px;
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 2px solid #800000;
+    padding-bottom: 10px;
+}
+
+h1 i {
+    color: #800000;
+    font-size: 28px;
+}
+
+/* Main Content */
+.main-content {
+    margin-left: 270px;
+    padding: 25px;
+    background-color: #ffffff;
+    min-height: calc(100vh - 50px);
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Top Actions Container */
+.top-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+/* Search Bar */
+.search-bar {
+    display: flex;
+    gap: 10px;
+    max-width: 400px;
+}
+
+.search-bar input {
+    flex: 1;
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.search-bar input:focus {
+    border-color: #800000;
+    box-shadow: 0 0 0 2px rgba(128, 0, 0, 0.1);
+    outline: none;
+}
+
+.search-bar button {
+    background-color: #800000;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.search-bar button:hover {
+    background-color: #990000;
+}
+
+/* Button Add */
+.btn-add {
+    background-color: #800000;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-add:hover {
+    background-color: #990000;
+    transform: translateY(-2px);
+}
+
+/* Table Styling */
+table {
+    width: 100%;
+    border-collapse: separate; /* Ubah dari collapse ke separate */
+    border-spacing: 0; /* Hilangkan celah antar sel */
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+    overflow: hidden; /* Pastikan radius berlaku */
+}
+
+th {
+    background-color: #800000;
+    color: white;
+    padding: 15px;
+    text-align: left;
+    font-weight: 500;
+}
+
+th:first-child {
+    border-top-left-radius: 8px;
+}
+
+th:last-child {
+    border-top-right-radius: 8px;
+}
+
+td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #eee;
+}
+
+tr:last-child td:first-child {
+    border-bottom-left-radius: 8px;
+}
+
+tr:last-child td:last-child {
+    border-bottom-right-radius: 8px;
+}
+
+tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* Button Actions */
+.action-buttons {
+    text-align: center;
+}
+
+.button-group {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-update, .btn-delete {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-update {
+    background-color: #ffc107;
+}
+
+.btn-delete {
+    background-color: #dc3545;
+}
+
+.btn-update i, .btn-delete i {
+    color: black;
+    font-size: 20px;
+}
+
+.btn-update:hover, .btn-delete:hover {
+    transform: translateY(-2px);
+    opacity: 0.8;
+}
+
+/* Modal Styling */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    overflow-y: auto;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+    background-color: #fff;
+    margin: 40px auto;
+    padding: 30px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.modal h2 {
+    color: #800000;
+    font-size: 24px;
+    margin-bottom: 25px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #800000;
+}
+
+.close {
+    position: absolute;
+    right: 25px;
+    top: 25px;
+    font-size: 24px;
+    font-weight: bold;
+    color: #666;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.close:hover {
+    color: #800000;
+}
+
+/* Form Styling */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #333;
+    font-weight: 500;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #800000;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(128, 0, 0, 0.1);
+}
+
+.btn-submit {
+    background-color: #800000;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+    font-weight: 500;
+    margin-top: 20px;
+    transition: all 0.3s ease;
+}
+
+.btn-submit:hover {
+    background-color: #990000;
+    transform: translateY(-2px);
+}
+
+/* Modal Animation */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 0;
+        padding: 15px;
+    }
+
+    .top-actions {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .search-bar {
+        max-width: 100%;
+        order: 2;
+    }
+
+    .btn-add {
+        width: 100%;
+        justify-content: center;
+        order: 1;
+    }
+
+    .modal-content {
+        margin: 20px;
+        padding: 20px;
+    }
+}
+
+    </style>
 </head>
 <body>
     <?php include('sidebar.php'); ?>
@@ -109,7 +423,7 @@ if (!empty($search)) {
         <div class="top-actions">
             <!-- Tombol untuk membuka modal tambah -->
             <button class="btn-add" onclick="openAddForm()">
-                <i class="fas fa-plus"></i> Tambah Data Restock
+                <i class="fas fa-plus"></i> 
             </button>
 
             <!-- Form Pencarian -->
