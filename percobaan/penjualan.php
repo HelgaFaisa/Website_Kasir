@@ -35,10 +35,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit'])) {
         // Generate invoice number
         $invoice = "INV" . date('YmdHis');
         $tanggal_input = date('Y-m-d H:i:s');
-        $total_transaksi = (float)$_POST['total_semua'];
-        $diskon = (float)$_POST['diskon'];
-        $bayar = (float)$_POST['bayar'];
-        $kembali = (float)$_POST['kembali'];
+        $total_transaksi = floatval($_POST['total_semua']);
+        $diskon = floatval($_POST['diskon']);
+        $bayar = floatval($_POST['bayar']);
+        $kembali = floatval($_POST['kembali']);
+
+        // Log input values
+        error_log("Invoice Type: " . gettype($invoice));
+        error_log("Total Transaksi Type: " . gettype($total_transaksi));
+        error_log("Bayar Type: " . gettype($bayar));
+        error_log("Kembali Type: " . gettype($kembali));
 
         // Insert main transaction record
         $stmt_transaksi = $config->prepare("INSERT INTO penjualan (invoice, tanggal_input, total, bayar, kembali, diskon) VALUES (?, ?, ?, ?, ?, ?)");
@@ -52,11 +58,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit'])) {
         );
 
         if (!$stmt_transaksi->execute()) {
-            throw new Exception("Gagal menyimpan transaksi: " . $stmt_transaksi->error);
+            error_log("Error Insert Penjualan: " . $stmt_transaksi->error);
+            throw new Exception("Gagal menyimpan transaksi utama: " . $stmt_transaksi->error);
         }
 
         // Get the last inserted penjualan ID
         $id_penjualan = $config->insert_id;
+        error_log("ID Penjualan: $id_penjualan berhasil disimpan");
 
         // Decode cart items from JSON
         $cart_items = json_decode($_POST['cart_items'], true);
@@ -64,14 +72,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit'])) {
         // Prepare detail transaction insert statement
         $stmt_detail = $config->prepare("INSERT INTO detail_penjualan (id_penjualan, kodebarang, jumlah, harga, total) VALUES (?, ?, ?, ?, ?)");
 
-        // Process each cart item
         foreach ($cart_items as $item) {
             $kodebarang = $item['kode'];
             $jumlah = (int)$item['jumlah'];
             $harga = (float)$item['harga'];
             $total_item = $jumlah * $harga;
 
-            // Check if there's enough stock
+            // Check stock
             $stmt_check_stock = $config->prepare("SELECT stok FROM barang WHERE kodebarang = ?");
             $stmt_check_stock->bind_param("s", $kodebarang);
             $stmt_check_stock->execute();
@@ -92,6 +99,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit'])) {
             );
 
             if (!$stmt_detail->execute()) {
+                error_log("Error Insert Detail Penjualan: " . $stmt_detail->error);
                 throw new Exception("Gagal menyimpan detail transaksi: " . $stmt_detail->error);
             }
 
@@ -100,28 +108,32 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit'])) {
             $stmt_stok->bind_param("is", $jumlah, $kodebarang);
 
             if (!$stmt_stok->execute()) {
+                error_log("Error Update Stok: " . $stmt_stok->error);
                 throw new Exception("Gagal update stok: " . $stmt_stok->error);
             }
         }
 
         $config->commit(); // Commit transaction
+        error_log("Transaksi berhasil di-commit");
 
+        // Format output for response
         $formattedTotal = number_format($total_transaksi, 0, ',', '.');
-$formattedBayar = number_format($bayar, 0, ',', '.');
-$formattedKembali = number_format($kembali, 0, ',', '.');
+        $formattedBayar = number_format($bayar, 0, ',', '.');
+        $formattedKembali = number_format($kembali, 0, ',', '.');
 
-echo json_encode([
-    'success' => true,
-    'invoice' => $invoice,
-    'total' => $formattedTotal,
-    'bayar' => $formattedBayar,
-    'kembali' => $formattedKembali,
-    'message' => 'Transaksi berhasil disimpan'
-]);
+        echo json_encode([
+            'success' => true,
+            'invoice' => $invoice,
+            'total' => $formattedTotal,
+            'bayar' => $formattedBayar,
+            'kembali' => $formattedKembali,
+            'message' => 'Transaksi berhasil disimpan'
+        ]);
         exit;
 
     } catch (Exception $e) {
         $config->rollback(); // Rollback transaction if failed
+        error_log("Error: " . $e->getMessage());
         echo json_encode([
             'success' => false, 
             'message' => $e->getMessage()
@@ -130,6 +142,7 @@ echo json_encode([
     }
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="id">
@@ -745,12 +758,17 @@ header {
             let bayar = parseFloat(document.getElementById("bayar").value) || 0;
             let kembali = bayar - totalAfterDiscount;
 
-            // Ensure values are numeric and not NaN
-            totalAfterDiscount = isNaN(totalAfterDiscount) ? 0 : totalAfterDiscount;
-            kembali = isNaN(kembali) ? 0 : kembali;
+            // Pastikan konversi ke format numerik
+            totalAfterDiscount = parseFloat(totalAfterDiscount.toFixed(2));
+            kembali = parseFloat(kembali.toFixed(2));
 
+             // Set input values menggunakan numberFormat
             document.getElementById("totalSemua").value = numberFormat(totalAfterDiscount);
             document.getElementById("kembali").value = numberFormat(kembali >= 0 ? kembali : 0);
+
+            // Simpan nilai numerik untuk form submission
+            document.getElementsByName("total_semua")[0].value = totalAfterDiscount;
+            document.getElementsByName("kembali")[0].value = kembali >= 0 ? kembali : 0;
 
             // Return these values for use in print receipt
             return {
@@ -807,6 +825,12 @@ header {
             alert('Keranjang masih kosong!');
             return false;
         }
+
+        // Tambahkan console.log untuk debugging
+    console.log("Cart Items:", cart);
+    console.log("Total Semua:", $('#totalSemua').val());
+    console.log("Bayar:", $('#bayar').val());
+    console.log("Kembali:", $('#kembali').val());
 
         // Get calculated values
         let calculatedValues = calculateTotal();

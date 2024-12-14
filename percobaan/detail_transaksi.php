@@ -239,17 +239,17 @@ td i {
                 <td><?= htmlspecialchars($transaksi['diskon']); ?></td>
             </tr>
             <tr>
-                <td><i class="fas fa-money-bill-wave"></i><strong>  Total Bayar</strong></td>
-                <td><?= htmlspecialchars($transaksi['total']); ?></td>
-            </tr>
-            <tr>
-                <td><i class="fas fa-credit-card"></i><strong>  Bayar</strong></td>
-                <td><?= htmlspecialchars($transaksi['bayar']); ?></td>
-            </tr>
-            <tr>
-                <td><i class="fas fa-coins"></i><strong>  Kembalian</strong></td>
-                <td><?= htmlspecialchars($transaksi['kembali']); ?></td>
-            </tr>
+    <td><i class="fas fa-money-bill-wave"></i><strong>  Total Bayar</strong></td>
+    <td>Rp <?= number_format($transaksi['total'], 0, ',', '.'); ?></td>
+</tr>
+<tr>
+    <td><i class="fas fa-credit-card"></i><strong>  Bayar</strong></td>
+    <td>Rp <?= number_format($transaksi['bayar'], 0, ',', '.'); ?></td>
+</tr>
+<tr>
+    <td><i class="fas fa-coins"></i><strong>  Kembalian</strong></td>
+    <td>Rp <?= number_format($transaksi['kembali'], 0, ',', '.'); ?></td>
+</tr>
         </tbody>
     </table>
     
