@@ -1,5 +1,16 @@
 <?php
 session_start();
+
+// Fungsi untuk set pesan sukses
+function setSuccessMessage($message) {
+    $_SESSION['success_message'] = $message;
+}
+
+// Fungsi untuk set pesan error
+function setErrorMessage($message) {
+    $_SESSION['error_message'] = $message;
+}
+
 if (!isset($_SESSION['user'])) {
     header("location: login.php");
     exit;
@@ -28,10 +39,31 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
     $harga_beli = $_POST['harga_beli'];
     $harga_total = $jumlah * $harga_beli;
 
-    $stmt = $config->prepare("INSERT INTO restock (id_restock, id_supplier, nama_barang, tanggal_restock, jumlah, harga_beli, harga_total) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("ssssdds", $id_restock, $id_supplier, $nama_barang, $tanggal_restock, $jumlah, $harga_beli, $harga_total);
-    $stmt->execute();
-    $stmt->close();
+    // Validasi input
+    $errors = [];
+    if (empty($id_supplier)) $errors[] = "Supplier harus dipilih";
+    if (empty($nama_barang)) $errors[] = "Nama barang harus diisi";
+    if (empty($tanggal_restock)) $errors[] = "Tanggal restock harus diisi";
+    if ($jumlah <= 0) $errors[] = "Jumlah harus lebih dari 0";
+    if ($harga_beli <= 0) $errors[] = "Harga beli harus lebih dari 0";
+
+    if (empty($errors)) {
+        $stmt = $config->prepare("INSERT INTO restock (id_restock, id_supplier, nama_barang, tanggal_restock, jumlah, harga_beli, harga_total) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("ssssdds", $id_restock, $id_supplier, $nama_barang, $tanggal_restock, $jumlah, $harga_beli, $harga_total);
+        
+        if ($stmt->execute()) {
+            setSuccessMessage("Data restock berhasil ditambahkan!");
+        } else {
+            setErrorMessage("Gagal menambahkan data restock: " . $stmt->error);
+        }
+        
+        $stmt->close();
+    } else {
+        $_SESSION['form_errors'] = $errors;
+    }
+    
+    header("Location: restok.php");
+    exit();
 }
 
 // Update data berdasarkan id_restock
@@ -44,10 +76,31 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update'])) {
     $harga_beli = $_POST['harga_beli'];
     $harga_total = $jumlah * $harga_beli;
 
-    $stmt = $config->prepare("UPDATE restock SET id_supplier = ?, nama_barang = ?, tanggal_restock = ?, jumlah = ?, harga_beli = ?, harga_total = ? WHERE id_restock = ?");
-    $stmt->bind_param("sssddds", $id_supplier, $nama_barang, $tanggal_restock, $jumlah, $harga_beli, $harga_total, $id_restock);
-    $stmt->execute();
-    $stmt->close();
+    // Validasi input
+    $errors = [];
+    if (empty($id_supplier)) $errors[] = "Supplier harus dipilih";
+    if (empty($nama_barang)) $errors[] = "Nama barang harus diisi";
+    if (empty($tanggal_restock)) $errors[] = "Tanggal restock harus diisi";
+    if ($jumlah <= 0) $errors[] = "Jumlah harus lebih dari 0";
+    if ($harga_beli <= 0) $errors[] = "Harga beli harus lebih dari 0";
+
+    if (empty($errors)) {
+        $stmt = $config->prepare("UPDATE restock SET id_supplier = ?, nama_barang = ?, tanggal_restock = ?, jumlah = ?, harga_beli = ?, harga_total = ? WHERE id_restock = ?");
+        $stmt->bind_param("sssddds", $id_supplier, $nama_barang, $tanggal_restock, $jumlah, $harga_beli, $harga_total, $id_restock);
+        
+        if ($stmt->execute()) {
+            setSuccessMessage("Data restock berhasil diperbarui!");
+        } else {
+            setErrorMessage("Gagal memperbarui data restock: " . $stmt->error);
+        }
+        
+        $stmt->close();
+    } else {
+        $_SESSION['form_errors'] = $errors;
+    }
+    
+    header("Location: restok.php");
+    exit();
 }
 
 // Delete data berdasarkan id_restock
@@ -56,8 +109,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete'])) {
 
     $stmt = $config->prepare("DELETE FROM restock WHERE id_restock = ?");
     $stmt->bind_param("s", $id_restock);
-    $stmt->execute();
+    
+    if ($stmt->execute()) {
+        setSuccessMessage("Data restock berhasil dihapus!");
+    } else {
+        setErrorMessage("Gagal menghapus data restock: " . $stmt->error);
+    }
+    
     $stmt->close();
+    header("Location: restok.php");
+    exit();
 }
 
 // Ambil data supplier
@@ -138,6 +199,39 @@ h1 i {
     align-items: center;
     margin-bottom: 20px;
 }
+
+.message-container {
+        margin-bottom: 20px;
+    }
+
+    .alert {
+        padding: 15px;
+        margin-bottom: 20px;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        opacity: 1;
+        transition: opacity 0.5s ease-out;
+    }
+
+    .alert-success {
+        color: #155724;
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+    }
+
+    .alert-danger {
+        color: #721c24;
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+    }
+
+    .alert.fade-out {
+        opacity: 0;
+        height: 0;
+        padding: 0;
+        margin: 0;
+        overflow: hidden;
+    }
 
 /* Search Bar */
 .search-bar {
@@ -437,6 +531,38 @@ tr:hover {
             </div>
         </div>
 
+        <!-- Message Container -->
+        <div class="message-container">
+            <?php
+            // Display success messages
+            if (isset($_SESSION['success_message'])) {
+                echo '<div class="alert alert-success" id="success-alert">' . 
+                     htmlspecialchars($_SESSION['success_message']) . 
+                     '</div>';
+                unset($_SESSION['success_message']);
+            }
+
+            // Display error messages
+            if (isset($_SESSION['error_message'])) {
+                echo '<div class="alert alert-danger" id="error-alert">' . 
+                     htmlspecialchars($_SESSION['error_message']) . 
+                     '</div>';
+                unset($_SESSION['error_message']);
+            }
+
+            // Display form validation errors
+            if (isset($_SESSION['form_errors'])) {
+                echo '<div class="alert alert-danger" id="errors-alert">';
+                foreach ($_SESSION['form_errors'] as $error) {
+                    echo htmlspecialchars($error) . "<br>";
+                }
+                echo '</div>';
+                unset($_SESSION['form_errors']);
+            }
+            ?>
+        </div>
+
+
         <!-- Tabel Data Restock -->
         <table>
             <thead>
@@ -602,6 +728,22 @@ tr:hover {
             const totalHarga = jumlah * hargaBeli;
             document.getElementById('edit_harga_total').value = totalHarga;
         }
+        // Fungsi untuk menghilangkan alert
+        function dismissAlerts() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    alert.classList.add('fade-out');
+                    
+                    setTimeout(() => {
+                        alert.remove();
+                    }, 500);
+                }, 5000);
+            });
+        }
+
+        // Panggil fungsi dismissAlerts saat halaman dimuat
+        document.addEventListener('DOMContentLoaded', dismissAlerts);
     </script>
 </body>
 </html>
