@@ -107,7 +107,7 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kategori - Toko Baju</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="style/kategori.css" rel="stylesheet" type="text/css">
+    <!-- <link href="style/kategori.css" rel="stylesheet" type="text/css"> -->
     <style>
         .message-container {
             width: 100%;
@@ -140,6 +140,106 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
             opacity: 0;
             transform: translateY(-100%);
         }
+        body {
+        font-family: Arial, sans-serif;
+        background-color: #f8f9fa;
+    }
+    .container {
+        margin-left: 250px;
+        padding: 20px;
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    }
+    input[type="text"] {
+        width: 60%;
+        padding: 10px;
+        margin: 5px 0;
+        border-radius: 5px;
+        border: 1px solid #ced4da;
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+    input[type="text"]::placeholder {
+        color: #6c757d;
+        opacity: 1;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+        padding: 1px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        white-space: nowrap;
+        border-radius: 12px; /* Sudut melengkung */
+        overflow: hidden; /* Untuk menampilkan sudut melengkung */
+    }
+    th, td {
+        padding: 12px 15px;
+        text-align: center;
+        border: 1px solid #ddd;
+    }
+    th {
+        background-color: #800000;
+        color: white;
+    }
+    tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+    tr:hover {
+        background-color: #f5f5f5;
+    }
+    .button {
+        padding: 8px 15px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin: 2px;
+    }
+    .btn-add {
+        background-color: #800000;
+        color: white;
+    }
+    .btn-update {
+        background-color: #800000;
+        color: white;
+    }
+    .btn-delete {
+        background-color: #dc3545;
+        color: white;
+    }
+    .btn-delete:hover {
+        background-color: #c82333;
+    }
+    .btn-update:hover {
+        background-color: #800000;
+    }
+    .btn-add:hover {
+        background-color: #982B1C
+    }
+    .search-form {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 5px;
+    }
+    .search-form input[type="text"] {
+        width: 250px;
+        padding: 8px;
+        border-radius: 5px;
+        border: 1px solid #ced4da;
+    }
+    .search-form button {
+        padding: 8px 15px;
+        margin-left: 5px;
+        background-color: #800000;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
     </style>
 </head>
 <body>
