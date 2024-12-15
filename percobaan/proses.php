@@ -13,7 +13,8 @@ $password = mysqli_real_escape_string($config, $_POST['password']);
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\SMTP;
 use PHPMailer\PHPMailer\Exception;
-require dirname(__DIR__) . '/vendor/autoload.php';  
+require_once __DIR__ . '/../vendor/autoload.php';  // Pastikan path sesuai dengan struktur folder kamu
+
 
 // Validasi email
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -64,7 +65,7 @@ try {
             <p>Terima kasih telah mendaftar pada website kami.</p>
             <p>Silakan klik tombol di bawah ini untuk memverifikasi akun Anda:</p>
             <p>
-                <a href="http://localhost/percobaan/percobaan/verif.php?code='.$code.'" 
+                <a href="http://localhost/webkasir/Website_Kasir/percobaan/verif.php?code='.$code.'" 
                    style="background-color: #4CAF50; 
                           color: white; 
                           padding: 10px 20px; 

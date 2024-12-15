@@ -223,7 +223,7 @@ try {
     <table id="dataTable">
         <thead>
             <tr>
-                <th>ID</th>
+                <th>No</th>
                 <th>Invoice</th>
                 <th>Tanggal</th>
                 <th>Total</th>

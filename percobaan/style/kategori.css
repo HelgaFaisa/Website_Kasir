@@ -61,7 +61,7 @@
             color: white;
         }
         .btn-update {
-            background-color: #007bff;
+            background-color: #800000;
             color: white;
         }
         .btn-delete {
@@ -72,7 +72,7 @@
             background-color: #c82333;
         }
         .btn-update:hover {
-            background-color: #0069d9;
+            background-color: #800000;
         }
         .btn-add:hover {
             background-color: #982B1C

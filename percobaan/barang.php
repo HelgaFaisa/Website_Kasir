@@ -263,7 +263,7 @@ if (!empty($search)) {
     <div class="action-bar">
         <div class="button-group">
             <button class="btn-add" onclick="openModal('Tambah Barang')">
-                <i class="fas fa-plus"></i> Tambah Barang
+                <i class="fas fa-plus"></i> 
             </button>
             
         </div>
@@ -420,9 +420,15 @@ if (!empty($search)) {
                 <input type="number" name="stok" id="stok" required>
             </div>
             <div class="form-buttons">
-                <button type="button" class="btn-cancel" onclick="closeModal()">Batal</button>
-                <button type="submit" name="submit" class="btn-submit"><?= $btn_text ?></button>
-            </div>
+    <button type="button" class="btn-cancel" onclick="closeModal()">
+        <i class="fas fa-times"></i> Batal
+    </button>
+    <button type="submit" name="submit" class="btn-submit">
+        <i class="fas fa-check"></i> <!-- Ikon Submit: Checkmark -->
+        <?= $btn_text ?>
+    </button>
+</div>
+
         </form>
     </div>
 </div>
@@ -467,9 +473,15 @@ if (!empty($search)) {
                 <input type="number" name="stok" id="edit_stok" required>
             </div>
             <div class="form-buttons">
-                <button type="button" class="btn-cancel" onclick="closeEditModal()">Batal</button>
-                <button type="submit" name="submit" class="btn-submit">Update Barang</button>
-            </div>
+    <button type="button" class="btn-cancel" onclick="closeEditModal()">
+        <i class="fas fa-times"></i> Batal
+    </button>
+    <button type="submit" name="submit" class="btn-submit">
+    <i class="fas fa-check"></i> Update Barang
+</button>
+
+</div>
+
         </form>
     </div>
 </div>

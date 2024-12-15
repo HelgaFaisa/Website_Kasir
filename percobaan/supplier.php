@@ -20,33 +20,69 @@ function generateKodeSupplier($config) {
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['submit'])) {
         // Menambahkan supplier baru
-        $kode_supplier = generateKodeSupplier($config); // Generate new kode_supplier
-        $nama_supplier = $_POST['nama_supplier'];
-        $alamat = $_POST['alamat'];
-        $telepon = $_POST['telepon'];
+        $nama_supplier = trim($_POST['nama_supplier']);
+        $alamat = trim($_POST['alamat']);
+        $telepon = trim($_POST['telepon']);
 
-        $stmt = $config->prepare("INSERT INTO supplier (kode_supplier, nama_supplier, alamat, telepon) VALUES (?, ?, ?, ?)");
-        $stmt->bind_param("ssss", $kode_supplier, $nama_supplier, $alamat, $telepon);
-        $stmt->execute();
-        $stmt->close();
+        // Validasi input
+        $errors = [];
+        if (empty($nama_supplier)) $errors[] = "Nama supplier tidak boleh kosong";
+        if (empty($alamat)) $errors[] = "Alamat tidak boleh kosong";
+        if (empty($telepon)) $errors[] = "Telepon tidak boleh kosong";
+
+        if (empty($errors)) {
+            $kode_supplier = generateKodeSupplier($config); // Generate new kode_supplier
+
+            $stmt = $config->prepare("INSERT INTO supplier (kode_supplier, nama_supplier, alamat, telepon) VALUES (?, ?, ?, ?)");
+            $stmt->bind_param("ssss", $kode_supplier, $nama_supplier, $alamat, $telepon);
+            
+            if ($stmt->execute()) {
+                $_SESSION['success_message'] = "Supplier berhasil ditambahkan!";
+            } else {
+                $_SESSION['error_message'] = "Gagal menambahkan supplier: " . $stmt->error;
+            }
+            $stmt->close();
+        } else {
+            $_SESSION['form_errors'] = $errors;
+        }
     } elseif (isset($_POST['update'])) {
         // Mengupdate supplier
         $id_supplier = $_POST['id_supplier'];
-        $nama_supplier = $_POST['nama_supplier'];
-        $alamat = $_POST['alamat'];
-        $telepon = $_POST['telepon'];
+        $nama_supplier = trim($_POST['nama_supplier']);
+        $alamat = trim($_POST['alamat']);
+        $telepon = trim($_POST['telepon']);
 
-        $stmt = $config->prepare("UPDATE supplier SET nama_supplier = ?, alamat = ?, telepon = ? WHERE id_supplier = ?");
-        $stmt->bind_param("sssi", $nama_supplier, $alamat, $telepon, $id_supplier);
-        $stmt->execute();
-        $stmt->close();
+        // Validasi input
+        $errors = [];
+        if (empty($nama_supplier)) $errors[] = "Nama supplier tidak boleh kosong";
+        if (empty($alamat)) $errors[] = "Alamat tidak boleh kosong";
+        if (empty($telepon)) $errors[] = "Telepon tidak boleh kosong";
+
+        if (empty($errors)) {
+            $stmt = $config->prepare("UPDATE supplier SET nama_supplier = ?, alamat = ?, telepon = ? WHERE id_supplier = ?");
+            $stmt->bind_param("sssi", $nama_supplier, $alamat, $telepon, $id_supplier);
+            
+            if ($stmt->execute()) {
+                $_SESSION['success_message'] = "Supplier berhasil diupdate!";
+            } else {
+                $_SESSION['error_message'] = "Gagal mengupdate supplier: " . $stmt->error;
+            }
+            $stmt->close();
+        } else {
+            $_SESSION['form_errors'] = $errors;
+        }
     } elseif (isset($_POST['delete'])) {
         // Menghapus supplier
         $id_supplier = $_POST['id_supplier'];
 
         $stmt = $config->prepare("DELETE FROM supplier WHERE id_supplier = ?");
         $stmt->bind_param("i", $id_supplier);
-        $stmt->execute();
+        
+        if ($stmt->execute()) {
+            $_SESSION['success_message'] = "Supplier berhasil dihapus!";
+        } else {
+            $_SESSION['error_message'] = "Gagal menghapus supplier: " . $stmt->error;
+        }
         $stmt->close();
     }
 }
@@ -54,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 // Query untuk menampilkan supplier
 $supplier_query = "SELECT * FROM supplier ORDER BY id_supplier DESC";
 if (isset($_GET['search'])) {
-    $search = $_GET['search'];
+    $search = $config->real_escape_string($_GET['search']);
     $supplier_query = "SELECT * FROM supplier WHERE nama_supplier LIKE '%$search%' ORDER BY id_supplier DESC";
 }
 $supplier_result = $config->query($supplier_query);
@@ -100,19 +136,87 @@ $supplier_result = $config->query($supplier_query);
             color: red;
             text-decoration: none;
         }
+        
+        /* Alert Styles */
+        .message-container {
+            position: relative;
+            margin-bottom: 15px;
+            z-index: 1000;
+        }
+
+        .alert {
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            opacity: 1;
+            transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .alert-success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+
+        .alert-danger {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+
+        .alert.fade-out {
+            opacity: 0;
+            transform: translateY(-100%);
+        }
     </style>
 </head>
 <body>
     <?php include('sidebar.php'); ?>
 
     <div class="container">
-        <h1>Data Supplier</h1>
-        <button id="openModal" class="button btn-add">Tambah Supplier</button>
 
+        <h1>Data Supplier</h1>
+        <button id="openModal" class="button btn-add">
+            <i class="fas fa-plus"></i>
+        </button>
         <form method="GET" action="supplier.php" class="search-form" id="supplierSearchForm">
             <input type="text" name="search" placeholder="Cari Supplier" id="supplierSearchInput" value="<?= htmlspecialchars($_GET['search'] ?? ''); ?>">
-            <button type="submit" class="button btn-update">Search</button>
+            <button type="submit" class="button btn-update">
+                <i class="fas fa-search"></i>
+            </button>        
         </form>
+
+        <div class="message-container">
+            <?php
+            // Display success messages
+            if (isset($_SESSION['success_message'])) {
+                echo '<div class="alert alert-success">' . 
+                     htmlspecialchars($_SESSION['success_message']) . 
+                     '</div>';
+                unset($_SESSION['success_message']);
+            }
+
+            // Display error messages
+            if (isset($_SESSION['error_message'])) {
+                echo '<div class="alert alert-danger">' . 
+                     htmlspecialchars($_SESSION['error_message']) . 
+                     '</div>';
+                unset($_SESSION['error_message']);
+            }
+
+            // Display form validation errors
+            if (isset($_SESSION['form_errors'])) {
+                echo '<div class="alert alert-danger">';
+                foreach ($_SESSION['form_errors'] as $error) {
+                    echo htmlspecialchars($error) . "<br>";
+                }
+                echo '</div>';
+                unset($_SESSION['form_errors']);
+            }
+            ?>
+        </div>
 
         <table>
             <tr>
@@ -140,13 +244,13 @@ $supplier_result = $config->query($supplier_query);
                         data-nama="<?= htmlspecialchars($supplier['nama_supplier']); ?>" 
                         data-alamat="<?= htmlspecialchars($supplier['alamat']); ?>" 
                         data-telepon="<?= htmlspecialchars($supplier['telepon']); ?>" 
-                        style="background: #dc3545; border: none; border-radius: 5px; padding: 10px; cursor: pointer; transition: background 0.3s;">
+                        style="background: #ffc107; border: none; border-radius: 5px; padding: 10px; cursor: pointer; transition: background 0.3s;">
                         <i class="fa fa-pencil-alt" style="color: black; font-size: 20px;"></i>
                     </button>
                     <form method="POST" style="display: inline; margin: 0;">
                         <input type="hidden" name="id_supplier" value="<?= $supplier['id_supplier']; ?>">
                         <button type="submit" name="delete" onclick="return confirm('Apakah Anda yakin ingin menghapus data ini?')" 
-                            style="background: #ffc107; border: none; border-radius: 5px; padding: 10px; cursor: pointer; transition: background 0.3s;">
+                            style="background: #dc3545; border: none; border-radius: 5px; padding: 10px; cursor: pointer; transition: background 0.3s;">
                             <i class="fa fa-trash" style="color: black; font-size: 20px;"></i>
                         </button>
                     </form>
@@ -246,6 +350,25 @@ $supplier_result = $config->query($supplier_query);
                 editModal.style.display = "none";
             }
         };
+
+        // Function to automatically dismiss alerts
+        function dismissAlerts() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                // Add fade-out class after 5 seconds
+                setTimeout(() => {
+                    alert.classList.add('fade-out');
+                    
+                     // Completely remove the alert after the fade-out animation
+                setTimeout(() => {
+                    alert.remove();
+                }, 500);
+            }, 5000);
+        });
+    }
+
+    // Call dismissAlerts when the page loads
+    document.addEventListener('DOMContentLoaded', dismissAlerts);
     </script>
 </body>
 </html>

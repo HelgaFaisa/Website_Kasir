@@ -269,3 +269,15 @@
         box-shadow: 0 0 0 2px rgba(128, 0, 0, 0.1);
         outline: none;
     }
+    #modal-title {
+        display: flex;
+        align-items: center;
+        font-size: 20px;
+        margin: 0;
+    }
+    
+    #modal-icon {
+        margin-right: 10px;  /* Jarak antara ikon dan teks */
+        font-size: 24px;     /* Ukuran ikon */
+    }
+    

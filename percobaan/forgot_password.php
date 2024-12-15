@@ -21,7 +21,8 @@ if (!$config) {
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\SMTP;
 use PHPMailer\PHPMailer\Exception;
-require dirname(__DIR__) . '/vendor/autoload.php';
+require_once __DIR__ . '/../vendor/autoload.php';  // Sesuaikan path jika perlu
+
 
 if(isset($_POST['forgot_password'])) {
     $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
@@ -76,7 +77,7 @@ if(isset($_POST['forgot_password'])) {
             // Content
             $mail->isHTML(true);
             $mail->Subject = 'Reset Password';
-            $resetLink = "http://localhost/percobaan/percobaan/reset_password.php?token=" . $reset_token;
+            $resetLink = "http://localhost/webkasir/Website_Kasir/percobaan/reset_password.php?token=" . $reset_token;
             
             $mail->Body = '
                 <html>
